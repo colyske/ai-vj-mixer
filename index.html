@@ -3,31 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI VJ Automixer: Neon Console</title>
+    <title>AI VJ Automixer: Kinetic Console Interface</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Load Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.com/css2?family=Inter:wght=100..900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         :root {
-            --primary-neon: #06b6d4; /* Cyan 500 */
-            --accent-neon: #d946ef; /* Fuchsia 500 */
-            --background-dark: #000408; /* Ultra dark background */
-            --control-panel-bg: #10171e; /* Dark slate blue for hardware */
-            --border-glow: #0e3048; /* Subtle blue glow border */
-            --fader-active: #ffffff; /* White fader handle */
+            --primary-color: #3b82f6; /* Blue 500 (A) */
+            --accent-color: #f97316; /* Orange 500 (B) */
+            --background-color: #0c0a09; /* Stone 950 */
+            --panel-bg: #161b22;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--background-dark); 
+            background-color: var(--background-color); 
             color: #e5e7eb;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
         .container {
             max-width: 1200px;
@@ -40,10 +33,9 @@
             width: 100%;
             aspect-ratio: 16 / 9;
             overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 0 50px rgba(6, 182, 212, 0.25), inset 0 0 10px rgba(6, 182, 212, 0.1); /* Intense video glow */
+            border-radius: 16px; /* Slightly more rounded */
+            box-shadow: 0 0 50px rgba(59, 130, 246, 0.2), 0 10px 40px rgba(0, 0, 0, 0.8); /* Stronger shadow */
             background-color: #000;
-            border: 2px solid var(--primary-neon);
         }
         .video-container {
             position: absolute;
@@ -58,197 +50,127 @@
             height: 100%;
             pointer-events: none;
         }
-        
-        /* Deck Control Styling - Main Mixer Hardware */
-        .deck-control-card {
-            background-color: var(--control-panel-bg);
-            border: 3px solid var(--border-glow);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(6, 182, 212, 0.15); /* Deep shadow + subtle neon */
-            padding: 2.5rem;
+        .input-style {
+            background-color: #1c1917; 
+            border: 1px solid #44403c;
+            color: #f9f9f9;
+            transition: border-color 0.2s;
         }
-        
-        /* Volume Sliders */
+        .input-style:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        .glow-button {
+            transition: all 0.2s ease;
+            background: linear-gradient(90deg, #1d4ed8, #0ea5e9);
+            box-shadow: 0 0 15px #0ea5e9;
+        }
+        .glow-button:hover {
+            box-shadow: 0 0 25px #0ea5e9, 0 0 10px rgba(249, 115, 22, 0.8);
+            transform: scale(1.02); /* Subtle lift */
+        }
+
+        /* --- Custom Animations --- */
+
+        /* Pulsing effect for the currently playing track */
+        @keyframes track-pulse {
+            0% { background-color: rgba(59, 130, 246, 0.1); }
+            50% { background-color: rgba(59, 130, 246, 0.3); }
+            100% { background-color: rgba(59, 130, 246, 0.1); }
+        }
+        .track-active {
+            animation: track-pulse 2s infinite alternate;
+        }
+        /* Glow for the active deck indicator */
+        @keyframes player-glow {
+            0% { box-shadow: 0 0 5px currentColor; opacity: 1; }
+            50% { box-shadow: 0 0 15px currentColor; opacity: 0.8; }
+            100% { box-shadow: 0 0 5px currentColor; opacity: 1; }
+        }
+        .playing-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+        .indicator-A.playing {
+            color: var(--primary-color);
+            background-color: var(--primary-color);
+            animation: player-glow 1.5s infinite ease-in-out;
+        }
+        .indicator-B.playing {
+            color: var(--accent-color);
+            background-color: var(--accent-color);
+            animation: player-glow 1.5s infinite ease-in-out;
+        }
+
+        /* Fader Display Enhancement */
+        #fader-display-wrapper {
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+        .fader-glow {
+            transition: box-shadow 0.2s ease;
+        }
+        .fader-glow-A {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+        }
+        .fader-glow-B {
+            box-shadow: 0 0 10px rgba(249, 115, 22, 0.6);
+        }
+
+        /* Volume Slider Styling */
         .volume-slider {
             -webkit-appearance: none;
-            width: 90%;
-            height: 10px;
-            background: #27272a; 
-            border-radius: 5px;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
             outline: none;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+            opacity: 0.8;
+            transition: opacity .2s;
         }
-        .volume-slider::-webkit-slider-thumb {
+        .volume-slider:hover {
+            opacity: 1;
+        }
+        /* Deck A Slider (Blue) */
+        .slider-A {
+            background: #3b82f6; /* Blue 500 */
+        }
+        .slider-A::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 25px;
-            height: 25px;
+            width: 18px; /* Slightly bigger thumb */
+            height: 18px;
             border-radius: 50%;
-            background: var(--accent-neon);
-            box-shadow: 0 0 15px var(--accent-neon);
-            border: 3px solid #fff;
+            background: #1e40af; /* Blue 800 */
+            border: 2px solid #fff;
             cursor: pointer;
-            transition: background 0.1s;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
-        .volume-slider::-webkit-slider-thumb:hover {
-            background: #ff57f8;
+        /* Deck B Slider (Orange) */
+        .slider-B {
+            background: #f97316; /* Orange 500 */
         }
-
-        /* Progress Bar Styling (The Meter) */
-        #track-progress-container {
-            position: relative;
-            height: 20px;
-            background-color: #1c1917; 
-            border-radius: 4px;
-            overflow: hidden;
-            border: 1px solid #44403c;
-            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-        }
-        #track-progress-bar {
-            height: 100%;
-            width: 0%;
-            background-color: var(--primary-neon);
-            box-shadow: 0 0 15px var(--primary-neon), inset 0 0 5px #fff3;
-            transition: width 0.2s linear;
-        }
-        #fade-zone {
-            position: absolute;
-            height: 100%;
-            right: 0;
-            background-color: rgba(217, 70, 239, 0.5); /* Fuchsia 500 with opacity */
-            z-index: 5;
-            transition: width 0.2s linear;
-        }
-
-        /* Transport Button Base */
-        .transport-button {
-            width: 55px;
-            height: 55px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            transition: all 0.1s ease-in-out;
-            border: 2px solid transparent;
-            text-shadow: 0 0 5px #000;
-        }
-        .transport-button:active {
-            transform: translateY(1px);
-            box-shadow: 0 1px 5px rgba(0,0,0,0.5) !important;
-        }
-
-        /* Play/Pause specific styles */
-        .play-button {
-            background-color: #10b981; /* Emerald */
-            box-shadow: 0 0 15px #10b98199;
-            border-color: #6ee7b7;
-        }
-        .pause-button {
-            background-color: #ef4444; /* Red */
-            box-shadow: 0 0 15px #ef444499;
-            border-color: #fca5a5;
-        }
-        
-        /* Crossfader track and handle */
-        #fader-track {
-            width: 90%; 
-            height: 8px;
-            background: linear-gradient(90deg, var(--primary-neon), #333, var(--accent-neon));
-            border-radius: 4px;
-            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.8), 0 0 5px #fff1;
-            position: relative;
-        }
-        #fader-handle {
-            position: absolute;
-            top: -10px;
-            width: 25px;
-            height: 28px;
-            border-radius: 4px;
-            background: var(--fader-active);
-            border: 1px solid var(--primary-neon);
-            box-shadow: 0 0 10px var(--primary-neon), inset 0 0 5px rgba(0, 0, 0, 0.5);
-            transition: left 0.1s linear, box-shadow 0.1s;
-            cursor: grab;
-        }
-        #fader-handle:active {
-            box-shadow: 0 0 20px var(--primary-neon), inset 0 0 5px rgba(255, 255, 255, 0.7);
-            cursor: grabbing;
-        }
-
-        /* Track Info Styling */
-        .track-info-panel {
-            background-color: #10171e;
-            border: 1px solid var(--primary-neon);
-            box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
-        }
-
-        /* Setlist Styling */
-        .track-list-item {
-            transition: all 0.2s ease-in-out;
+        .slider-B::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px; /* Slightly bigger thumb */
+            height: 18px;
+            border-radius: 50%;
+            background: #c2410c; /* Orange 800 */
+            border: 2px solid #fff;
             cursor: pointer;
-        }
-        .active-track {
-            border-left: 6px solid var(--accent-neon) !important;
-            background-color: rgba(217, 70, 239, 0.15) !important;
-            font-weight: 800;
-            text-shadow: 0 0 5px var(--accent-neon);
-            color: #fff !important;
-            animation: pulse-glow 1s infinite alternate;
-        }
-        
-        @keyframes pulse-glow {
-            from { box-shadow: 0 0 5px var(--accent-neon); }
-            to { box-shadow: 0 0 15px var(--accent-neon); }
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
     </style>
 </head>
 <body class="flex flex-col items-center p-4">
-
-    <h1 class="text-5xl md:text-6xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500 mb-8 mt-2">
-        AI VJ AUTOMIXER <span class="text-3xl font-light">CONSOLE</span>
+    <h1 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-8">
+        AI VJ Automixer Console
     </h1>
-
-    <!-- AI Generation & Input Section (Enhanced with Icons) -->
-    <div id="input-section" class="w-full max-w-lg mb-8 p-6 bg-[#1c1917] rounded-xl shadow-2xl border border-cyan-700/50">
-        <h2 class="text-2xl font-bold text-cyan-400 mb-6 flex items-center">
-            <i data-lucide="sparkles" class="w-6 h-6 mr-3 text-fuchsia-400"></i>
-            Setlist AI Generator
-        </h2>
-        
-        <label for="location" class="block text-sm font-medium text-gray-300 mb-1 flex items-center">
-            <i data-lucide="map-pin" class="w-4 h-4 mr-1 text-cyan-400"></i>
-            Club Location
-        </label>
-        <input type="text" id="location" placeholder="e.g., Warehouse District, Berlin" value="" class="input-style w-full p-3 rounded-lg mb-3 bg-stone-900 border-gray-700 focus:border-cyan-400 focus:ring-cyan-400 text-white">
-        
-        <label for="theme" class="block text-sm font-medium text-gray-300 mb-1 flex items-center">
-            <i data-lucide="music-4" class="w-4 h-4 mr-1 text-cyan-400"></i>
-            Theme Night / Genre Focus
-        </label>
-        <input type="text" id="theme" placeholder="e.g., 90s Industrial Techno and Dark Minimal" value="" class="input-style w-full p-3 rounded-lg mb-4 bg-stone-900 border-gray-700 focus:border-cyan-400 focus:ring-cyan-400 text-white">
-        
-        <button id="generateButton" class="glow-button w-full p-4 text-white font-bold rounded-xl text-lg flex items-center justify-center bg-gradient-to-r from-cyan-500 to-fuchsia-600 shadow-xl shadow-fuchsia-600/30 hover:shadow-cyan-500/50">
-            <i data-lucide="zap" class="w-6 h-6 mr-2"></i>
-            Generate 20-Track Setlist
-        </button>
-        <p id="default-info" class="text-center text-xs text-gray-400 mt-2">
-            *Leave both fields empty for a globally "Trending" setlist.
-        </p>
-        <div id="loadingIndicator" class="hidden mt-4 text-center text-cyan-400">
-            <svg class="animate-spin inline-block h-5 w-5 mr-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            <span id="loadingText">Generating setlist...</span>
-        </div>
-        <div id="errorBox" class="hidden mt-4 p-3 bg-red-900 border border-red-700 text-red-300 rounded-lg text-sm">
-            <p class="font-semibold">Error:</p>
-            <p id="errorMessage"></p>
-        </div>
-    </div>
-    
     <!-- Video Player Section -->
-    <div id="vj-section" class="w-full max-w-5xl mb-8" style="display: none;">
-        
-        <!-- Video Display (The Decks) -->
+    <div id="vj-section" class="w-full max-w-4xl mb-8" style="display: none;">
         <div class="video-wrapper">
             <!-- Deck A (Bottom Layer) -->
             <div id="deck-A" class="video-container" style="opacity: 1;">
@@ -259,176 +181,99 @@
                 <div id="player-B"></div>
             </div>
         </div>
-        
-        <!-- DJ Mixer Console (Hardware Panel) -->
-        <div class="mt-8 p-6 deck-control-card grid grid-cols-1 md:grid-cols-3 gap-8 rounded-xl">
-            
-            <!-- DECK A CONTROLS (LEFT) -->
-            <div class="flex flex-col items-center p-3 border border-cyan-800/50 rounded-lg bg-gray-900/30 shadow-inner shadow-cyan-900/50">
-                <h3 class="font-extrabold text-3xl text-cyan-400 mb-6 flex items-center">
-                    <i data-lucide="disc-3" class="w-7 h-7 mr-2"></i>
-                    DECK A
-                </h3>
-                
-                <!-- Volume Slider -->
-                <p class="text-base font-mono text-gray-300 mb-3 flex items-center">
-                    <i data-lucide="volume-2" class="w-4 h-4 mr-1 text-white"></i>
-                    LEVEL: <span id="vol-A">0</span>%
+        <!-- Deck Controls & VJ Status -->
+        <div class="mt-4 p-4 bg-\[#161b22\] rounded-xl shadow-lg border border-gray-700">
+            <div class="flex justify-between items-start mb-4">
+                <p class="text-xl font-extrabold text-gray-100">
+                    <span id="current-track-info">Waiting for setlist...</span>
                 </p>
-                <input type="range" min="0" max="100" value="0" oninput="manualControl('A', 'volume', this.value)" class="volume-slider">
-                
-                <!-- Transport Buttons -->
-                <div id="deck-A-controls" class="flex space-x-6 mt-6">
-                    <!-- Play Button -->
-                    <button id="play-A" onclick="manualControl('A', 'play')" class="transport-button play-button">
-                        <i data-lucide="play" class="w-6 h-6 ml-1"></i>
-                    </button>
-                    <!-- Pause Button -->
-                    <button id="pause-A" onclick="manualControl('A', 'pause')" class="transport-button pause-button">
-                        <i data-lucide="square" class="w-6 h-6"></i>
-                    </button>
-                </div>
-                
-                <p class="text-sm text-cyan-400 mt-6 font-mono font-bold">MIX OUT: <span id="mix-level-A">100%</span></p>
-            </div>
-
-            <!-- CENTRAL MIXER (MIDDLE) -->
-            <div class="flex flex-col items-center p-3 bg-gray-900/50 rounded-lg border border-gray-700/50 shadow-inner shadow-gray-900/50">
-                <h3 class="font-extrabold text-3xl text-white mb-6 flex items-center">
-                    <i data-lucide="brain-circuit" class="w-7 h-7 mr-2 text-fuchsia-400"></i>
-                    AUTOMATION
-                </h3>
-                
-                <!-- Status -->
-                <p class="text-xl font-bold text-gray-300 mb-2">MODE:</p>
-                <p id="mix-status" class="text-2xl font-mono text-fuchsia-400 mb-8 transition-colors duration-300">AUTO MIXING</p>
-                
-                <!-- Crossfader Track -->
-                <div id="fader-track" class="flex items-center mb-8">
-                    <div id="fader-handle" class="absolute transform -translate-x-1/2" style="left: calc(0% - 8px);"></div>
-                </div>
-
-                <div class="w-full flex justify-between text-sm font-bold text-gray-400 -mt-6 mb-8 px-4">
-                    <span class="text-cyan-400">A (100%)</span>
-                    <span class="text-fuchsia-400">B (100%)</span>
-                </div>
-                
-                <!-- Automation Control -->
-                <button id="toggle-automation" onclick="toggleAutomation()" class="w-full px-6 py-3 font-bold rounded-xl transition duration-200 text-lg shadow-xl shadow-green-600/50 bg-green-600 hover:bg-green-700">
+                <button id="toggle-automation" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full shadow-md transition duration-200 text-sm">
                     Automation ON (Active)
                 </button>
-
-                <!-- Manual Jump -->
-                <button onclick="forceNextTrack()" class="w-full mt-4 p-3 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-lg text-sm shadow-md shadow-fuchsia-600/50 flex items-center justify-center">
-                    <i data-lucide="skip-forward" class="w-5 h-5 mr-2"></i>
-                    <span class="font-mono text-lg">SKIP >></span> (Next Track)
-                </button>
             </div>
-
-            <!-- DECK B CONTROLS (RIGHT) -->
-            <div class="flex flex-col items-center p-3 border border-fuchsia-800/50 rounded-lg bg-gray-900/30 shadow-inner shadow-fuchsia-900/50">
-                <h3 class="font-extrabold text-3xl text-fuchsia-400 mb-6 flex items-center">
-                    <i data-lucide="disc-3" class="w-7 h-7 mr-2"></i>
-                    DECK B
-                </h3>
-
-                <!-- Volume Slider -->
-                <p class="text-base font-mono text-gray-300 mb-3 flex items-center">
-                    <i data-lucide="volume-2" class="w-4 h-4 mr-1 text-white"></i>
-                    LEVEL: <span id="vol-B">0</span>%
-                </p>
-                <input type="range" min="0" max="100" value="0" oninput="manualControl('B', 'volume', this.value)" class="volume-slider">
-
-                <!-- Transport Buttons -->
-                <div id="deck-B-controls" class="flex space-x-6 mt-6">
-                    <!-- Play Button -->
-                    <button id="play-B" onclick="manualControl('B', 'play')" class="transport-button play-button">
-                        <i data-lucide="play" class="w-6 h-6 ml-1"></i>
-                    </button>
-                    <!-- Pause Button -->
-                    <button id="pause-B" onclick="manualControl('B', 'pause')" class="transport-button pause-button">
-                        <i data-lucide="square" class="w-6 h-6"></i>
-                    </button>
+            
+            <!-- Deck Controls -->
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <!-- Deck A Controls (Blue Theme) -->
+                <div id="controls-A" class="bg-blue-900/20 p-3 rounded-lg border border-blue-800 shadow-xl transition-all duration-300">
+                    <h3 class="font-extrabold text-blue-400 mb-2 flex items-center">
+                        DECK A 
+                        <span id="indicator-A" class="playing-indicator indicator-A"></span>
+                    </h3>
+                    <button onclick="manualControl('A', 'play')" class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-white text-sm mr-2 shadow-md">Play</button>
+                    <button onclick="manualControl('A', 'pause')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-white text-sm shadow-md">Pause</button>
+                    <input type="range" min="0" max="100" value="0" oninput="manualControl('A', 'volume', this.value)" class="volume-slider slider-A mt-3">
+                    <p class="text-sm text-gray-300 mt-1 font-mono">Volume: <span id="vol-A" class="font-extrabold text-blue-300">0</span>%</p>
                 </div>
-                
-                <p class="text-sm text-fuchsia-400 mt-6 font-mono font-bold">MIX OUT: <span id="mix-level-B">0%</span></p>
+                <!-- Deck B Controls (Orange Theme) -->
+                <div id="controls-B" class="bg-orange-900/20 p-3 rounded-lg border border-orange-800 shadow-xl transition-all duration-300">
+                    <h3 class="font-extrabold text-orange-400 mb-2 flex items-center">
+                        DECK B
+                        <span id="indicator-B" class="playing-indicator indicator-B"></span>
+                    </h3>
+                    <button onclick="manualControl('B', 'play')" class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-white text-sm mr-2 shadow-md">Play</button>
+                    <button onclick="manualControl('B', 'pause')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-white text-sm shadow-md">Pause</button>
+                    <input type="range" min="0" max="100" value="0" oninput="manualControl('B', 'volume', this.value)" class="volume-slider slider-B mt-3">
+                    <p class="text-sm text-gray-300 mt-1 font-mono">Volume: <span id="vol-B" class="font-extrabold text-orange-300">0</span>%</p>
+                </div>
             </div>
-
+            <!-- Fader Display -->
+            <div class="bg-gray-800 p-3 rounded-lg flex items-center justify-center space-x-4">
+                <span class="text-sm font-medium text-blue-400">A Mix: <span id="mix-level-A" class="font-bold">100%</span></span>
+                <div id="fader-display-wrapper" class="w-3/4 h-3 bg-gray-900 rounded-full overflow-hidden">
+                    <div id="fader-display" class="h-full bg-blue-500 rounded-full transition-all duration-100 ease-linear fader-glow" style="width: 0%;"></div>
+                </div>
+                <span class="text-sm font-medium text-orange-400">B Mix: <span id="mix-level-B" class="font-bold">0%</span></span>
+            </div>
+            <p class="text-sm text-center text-gray-400 mt-3 font-mono">
+                TIME: <span id="current-time-display" class="font-bold text-lg text-green-400">0:00</span> / <span id="duration-display">0:00</span> (Track <span id="track-index-display">0</span> of 20)
+            </p>
         </div>
-        
-        <!-- TRACK INFO GROUP (BELOW MIXER) -->
-        <div class="w-full mt-6 mb-4 p-4 track-info-panel rounded-xl">
-            <!-- Current Track Info -->
-            <div class="flex justify-between items-start mb-3">
-                <div class="flex-grow">
-                    <h2 class="text-3xl font-extrabold text-white flex items-center">
-                         <i data-lucide="headset" class="w-6 h-6 mr-2 text-cyan-400"></i>
-                        <span id="current-track-title" class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-fuchsia-400">---</span>
-                    </h2>
-                    <p class="text-lg text-gray-300 ml-8">
-                        <i data-lucide="user" class="w-4 h-4 mr-1 text-gray-500"></i>
-                        <span id="current-track-artist">---</span>
-                    </p>
-                </div>
-                <div class="text-right flex-shrink-0">
-                    <p class="text-base font-mono text-gray-500 flex items-center justify-end">
-                        <i data-lucide="align-right" class="w-4 h-4 mr-1 text-gray-500"></i>
-                        TRACK
-                    </p>
-                    <p class="text-3xl font-mono text-white font-extrabold">
-                        <span id="track-index-display">0</span> / 20
-                    </p>
-                </div>
-            </div>
-
-            <!-- Progress Bar & Fade Zone -->
-            <div class="relative mt-4">
-                <div id="track-progress-container">
-                    <div id="fade-zone" class="z-10"></div>
-                    <div id="track-progress-bar" class="z-20"></div>
-                </div>
-                <div class="flex justify-between text-sm font-mono text-gray-400 mt-2">
-                    <span id="current-time-display" class="flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1"></i> 0:00</span>
-                    <span id="duration-display" class="flex items-center">Total: 0:00 <i data-lucide="clock" class="w-3 h-3 ml-1"></i></span>
-                </div>
-            </div>
-        </div>
-        <!-- END TRACK INFO GROUP -->
-
     </div>
-
+    <!-- AI Generation & Input Section -->
+    <div id="input-section" class="w-full max-w-lg mb-8 p-6 bg-\[#1c1917\] rounded-xl shadow-2xl border border-blue-900/50">
+        <h2 class="text-2xl font-bold text-blue-400 mb-4">Setlist AI</h2>
+        <label for="location" class="block text-sm font-medium text-gray-300 mb-1">Club Location</label>
+        <input type="text" id="location" placeholder="e.g., Warehouse District, Berlin" value="" class="input-style w-full p-3 rounded-lg mb-3">
+        
+        <label for="theme" class="block text-sm font-medium text-gray-300 mb-1">Theme Night / Genre Focus</label>
+        <input type="text" id="theme" placeholder="e.g., 90s Industrial Techno and Dark Minimal" value="" class="input-style w-full p-3 rounded-lg mb-4">
+        
+        <button id="generateButton" class="glow-button w-full p-4 text-white font-bold rounded-xl text-lg flex items-center justify-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Generate 20-Track Setlist
+        </button>
+        <p id="default-info" class="text-center text-xs text-gray-400 mt-2">
+            *Leave both fields empty to generate a "Trending Songs" setlist.
+        </p>
+        <div id="loadingIndicator" class="hidden mt-4 text-center text-blue-400">
+            <svg class="animate-spin inline-block h-5 w-5 mr-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <span id="loadingText">Generating setlist...</span>
+        </div>
+        <div id="errorBox" class="hidden mt-4 p-3 bg-red-900 border border-red-700 text-red-300 rounded-lg text-sm">
+            <p class="font-semibold">Error:</p>
+            <p id="errorMessage"></p>
+        </div>
+    </div>
     
     <!-- Setlist Display Section -->
-    <div id="setlist-display" class="w-full max-w-5xl mt-6 p-6 bg-[#161b22] rounded-xl shadow-2xl border border-gray-700" style="display: none;">
-        <h2 class="text-2xl font-bold text-fuchsia-400 mb-4 flex items-center">
-            <i data-lucide="list-music" class="w-6 h-6 mr-3"></i>
-            Generated Setlist (Click to Cue)
-        </h2>
-        <p id="ai-insight" class="text-cyan-300 italic mb-4">---</p>
-        <ol id="track-list" class="space-y-1"></ol>
+    <div id="setlist-display" class="w-full max-w-4xl mt-6 p-6 bg-\[#161b22\] rounded-xl shadow-2xl border border-gray-700" style="display: none;">
+        <h2 class="text-2xl font-bold text-accent-color mb-4">Generated Setlist (20 Tracks)</h2>
+        <p id="ai-insight" class="text-blue-300 italic mb-4">---</p>
+        <ol id="track-list" class="space-y-2"></ol>
     </div>
-
     <!-- YouTube IFrame Player API Script -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-        // Initialize Lucide Icons after the DOM structure is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-             // This function replaces the data-lucide attributes with the actual SVG icons.
-             if (typeof lucide !== 'undefined' && lucide.createIcons) {
-                 lucide.createIcons();
-             }
-        });
-
         // ==============================================
         // CONFIGURATION & GLOBAL STATE
         // ==============================================
-        const apiKey = ""; // Canvas will provide this key at runtime
+        const apiKey = "AIzaSyAv5NcneJ7HhAP4yH9cF2s-U5Z-PlEH8QA"; // Canvas will provide this key at runtime
         const AI_MODEL = "gemini-2.5-flash-preview-09-2025";
         const TRACK_COUNT = 20;
         const FADE_DURATION_SECONDS = 8; 
         const TIMER_INTERVAL_MS = 250; 
-        const FALLBACK_ID = 'dQw4w9WgXcQ'; // Rick Astley - Never Gonna Give You Up
-
+        const FALLBACK_ID = 'dQw4w9WgXcQ'; // Rick Astley - Never Gonna Give You Up (Good fallback visual)
         let playerA, playerB;
         let isPlayersReady = false;
         let setlist = [];
@@ -438,22 +283,17 @@
         let timerInterval = null; 
         let isCrossfading = false;
         let isAutomationEnabled = true;
-
         // UI Elements
-        const vjSection = document.getElementById('vj-section'); 
-        const faderDisplay = document.getElementById('fader-track'); 
-        const faderHandle = document.getElementById('fader-handle');
+        const faderDisplay = document.getElementById('fader-display');
+        const faderWrapper = document.getElementById('fader-display-wrapper');
         const deckA = document.getElementById('deck-A');
         const deckB = document.getElementById('deck-B');
-        const currentTrackTitle = document.getElementById('current-track-title');
-        const currentTrackArtist = document.getElementById('current-track-artist');
+        const currentTrackInfo = document.getElementById('current-track-info');
         const mixLevelA = document.getElementById('mix-level-A');
         const mixLevelB = document.getElementById('mix-level-B');
         const currentTimeDisplay = document.getElementById('current-time-display');
         const durationDisplay = document.getElementById('duration-display');
         const trackIndexDisplay = document.getElementById('track-index-display');
-        const trackProgressBar = document.getElementById('track-progress-bar');
-        const fadeZone = document.getElementById('fade-zone');
         const trackList = document.getElementById('track-list');
         const aiInsight = document.getElementById('ai-insight');
         const generateButton = document.getElementById('generateButton');
@@ -462,11 +302,10 @@
         const errorBox = document.getElementById('errorBox');
         const errorMessage = document.getElementById('errorMessage');
         const toggleAutomationBtn = document.getElementById('toggle-automation');
-        const mixStatus = document.getElementById('mix-status');
-
-        // Fader dragging state
-        let isDragging = false;
-        let faderContainer = document.getElementById('fader-track');
+        const indicatorA = document.getElementById('indicator-A');
+        const indicatorB = document.getElementById('indicator-B');
+        const controlsA = document.getElementById('controls-A');
+        const controlsB = document.getElementById('controls-B');
 
 
         // ==============================================
@@ -475,66 +314,41 @@
         function getPlayer(deck) {
             return deck === 'A' ? playerA : playerB;
         }
-
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds < 0) return "0:00";
             const min = Math.floor(seconds / 60);
             const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
             return `${min}:${sec}`;
         }
-
         function showLoading(isLoading, phaseText = "Executing request...") {
             loadingIndicator.classList.toggle('hidden', !isLoading);
             generateButton.disabled = isLoading;
             loadingText.textContent = phaseText;
             generateButton.classList.toggle('opacity-50', isLoading);
         }
-
         function displayError(message) {
             errorMessage.textContent = message;
             errorBox.classList.remove('hidden');
         }
-
         function hideError() {
             errorBox.classList.add('hidden');
         }
-
-        function updateAutomationUI() {
-            if (isAutomationEnabled) {
-                toggleAutomationBtn.textContent = isCrossfading ? 'AUTOMATION FADING...' : 'AUTO MIX ACTIVE';
-                toggleAutomationBtn.classList.remove('bg-red-600', 'hover:bg-red-700', 'shadow-red-600/50');
-                toggleAutomationBtn.classList.add('bg-green-600', 'hover:bg-green-700', 'shadow-green-600/50');
-                mixStatus.textContent = isCrossfading ? 'FADING...' : 'AUTO MIXING';
-                mixStatus.classList.add('text-fuchsia-400');
-                mixStatus.classList.remove('text-red-400');
-            } else {
-                toggleAutomationBtn.textContent = 'MANUAL CONTROL (OFF)';
-                toggleAutomationBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'shadow-green-600/50');
-                toggleAutomationBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'shadow-red-600/50');
-                mixStatus.textContent = 'MANUAL OVERRIDE';
-                mixStatus.classList.add('text-red-400');
-                mixStatus.classList.remove('text-fuchsia-400');
-            }
-        }
-
         function toggleAutomation() {
             isAutomationEnabled = !isAutomationEnabled;
-            isCrossfading = false; // Reset crossfade on toggle
-            updateAutomationUI();
+            toggleAutomationBtn.textContent = isAutomationEnabled ? 'Automation ON (Active)' : 'Automation OFF (Manual)';
+            toggleAutomationBtn.classList.toggle('bg-green-600', isAutomationEnabled);
+            toggleAutomationBtn.classList.toggle('hover:bg-green-700', isAutomationEnabled);
+            toggleAutomationBtn.classList.toggle('bg-red-600', !isAutomationEnabled);
+            toggleAutomationBtn.classList.toggle('hover:bg-red-700', !isAutomationEnabled);
         }
-
-        function setManualControl() {
-            if (isAutomationEnabled) {
-                isAutomationEnabled = false;
-                isCrossfading = false;
-                updateAutomationUI();
-            }
+        function updatePlayerIndicator(deck, isPlaying) {
+            const indicator = deck === 'A' ? indicatorA : indicatorB;
+            const controls = deck === 'A' ? controlsA : controlsB;
+            indicator.classList.toggle('playing', isPlaying);
+            // Apply a subtle shadow/border to the entire control panel if playing
+            controls.classList.toggle('shadow-blue-500/50', isPlaying && deck === 'A');
+            controls.classList.toggle('shadow-orange-500/50', isPlaying && deck === 'B');
         }
-        
-        function scrollToVideo() {
-            vjSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
 
         // ==============================================
         // MANUAL CONTROL FUNCTIONS
@@ -542,37 +356,30 @@
         function manualControl(deck, action, value = null) {
             const player = getPlayer(deck);
             if (!player || !isPlayersReady) return;
-
-            setManualControl();
-
-            const playBtn = document.getElementById(`play-${deck}`);
-            const pauseBtn = document.getElementById(`pause-${deck}`);
-
+            // Manual intervention temporarily disables automation
+            if (isAutomationEnabled) {
+                isAutomationEnabled = false;
+                toggleAutomationBtn.textContent = 'Automation OFF (Manual)';
+                toggleAutomationBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                toggleAutomationBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            }
             switch (action) {
                 case 'play':
                     player.playVideo();
-                    playBtn.classList.add('shadow-green-500/80');
-                    pauseBtn.classList.remove('shadow-red-500/80');
+                    updatePlayerIndicator(deck, true);
                     break;
                 case 'pause':
                     player.pauseVideo();
-                    playBtn.classList.remove('shadow-green-500/80');
-                    pauseBtn.classList.add('shadow-red-500/80');
+                    updatePlayerIndicator(deck, false);
                     break;
                 case 'volume':
                     const volume = parseInt(value, 10);
                     player.setVolume(volume);
-                    // Mute/unmute based on volume level
-                    if (volume > 0) {
-                       player.unMute();
-                    } else {
-                       player.mute();
-                    }
+                    player.unMute();
                     document.getElementById(`vol-${deck}`).textContent = volume;
                     break;
             }
         }
-
         // ==============================================
         // AI SETLIST GENERATION (GEMINI API)
         // ==============================================
@@ -609,23 +416,22 @@
                 }
             }
         }
-
         async function generateSetlist() {
             hideError();
-            setlist = []; 
+            setlist = []; // Clear existing list
             
             const location = document.getElementById('location').value.trim();
             const theme = document.getElementById('theme').value.trim();
             
             let userQuery;
             if (location === "" && theme === "") {
-                userQuery = "Generate a continuous 20-track setlist featuring globally trending songs with excellent official music videos or visuals, suitable for VJ playback. The tracks must be mixable.";
+                userQuery = "Generate a continuous 20-track setlist featuring globally trending songs with excellent official music videos or visuals, suitable for VJ playback.";
             } else {
                 userQuery = `Location: ${location}. Theme/Genre: ${theme}. Generate a continuous 20-track setlist, where the next track is mixable with the previous one.`;
             }
-
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${apiKey}`; 
             
+            // Define the structured output schema
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { 
@@ -657,15 +463,13 @@
                     }
                 }
             };
-
             try {
                 showLoading(true, "Generating 20-Track Setlist and finding YouTube IDs...");
                 
                 const result = await fetchWithRetry(apiUrl, payload);
                 let jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
                 
-                // Robust JSON parsing: Remove markdown code fences if present
-                const parsedData = JSON.parse(jsonText.replace(/```json|```/g, '').trim());
+                const parsedData = JSON.parse(jsonText.replace(/\`\`\`json|\`\`\`/g, '').trim());
                 
                 if (!Array.isArray(parsedData.setlist) || parsedData.setlist.length !== TRACK_COUNT) {
                     throw new Error(`AI generated an invalid setlist (Expected ${TRACK_COUNT} tracks).`);
@@ -673,7 +477,7 @@
                 
                 setlist = parsedData.setlist.map(t => ({
                     ...t,
-                    youtubeId: t.youtubeId?.trim() || FALLBACK_ID 
+                    youtubeId: t.youtubeId?.trim() || FALLBACK_ID // Fallback ID
                 }));
                 
                 // Update UI
@@ -684,10 +488,6 @@
                 
                 // Start the mix
                 startMix();
-
-                // Scroll to the video player after a slight delay
-                setTimeout(scrollToVideo, 50); 
-
             } catch (e) {
                 console.error("AI Generation Error:", e);
                 displayError(`AI Generation failed. Check console for details. ${e.message}`);
@@ -697,77 +497,31 @@
                 showLoading(false);
             }
         }
-
         function renderSetlistUI() {
             trackList.innerHTML = setlist.map((track, index) =>
-                `<li id="track-${index}" onclick="cueTrack(${index})" class="track-list-item p-3 rounded-lg border-l-4 border-gray-700/50 flex justify-between items-center text-sm transition-colors duration-300">
-                    <span class="font-bold w-6 text-cyan-400">${index + 1}.</span>
+                `<li id="track-${index}" class="p-3 rounded-lg border-b border-gray-700/50 flex justify-between items-center text-sm transition-colors duration-300">
+                    <span class="font-bold w-6 text-blue-400">${index + 1}.</span>
                     <span class="flex-grow">
                         ${track.track}
-                        <span class="text-gray-400 italic">- ${track.artist}</span>
+                        <span class="text-gray-400">- ${track.artist}</span>
                     </span>
+                    <span class="text-gray-500 text-xs">ID: ${track.youtubeId}</span>
                 </li>`
             ).join('');
         }
-
         function highlightCurrentTrack(index) {
             document.querySelectorAll('#track-list li').forEach(li => {
-                li.classList.remove('active-track');
-                li.classList.add('border-gray-700/50');
+                li.classList.remove('track-active', 'border-blue-500', 'bg-blue-900/30');
             });
             const currentLi = document.getElementById(`track-${index}`);
             if (currentLi) {
-                currentLi.classList.add('active-track');
+                currentLi.classList.add('track-active', 'border-blue-500');
+          //      currentLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-        
-        /**
-         * Cue the selected track into Deck A, and the next track into Deck B.
-         */
-        function cueTrack(index) {
-            if (!isPlayersReady || setlist.length === 0 || index >= setlist.length) return;
-            
-            // Stop current automation and reset state
-            if (timerInterval) clearInterval(timerInterval);
-            isCrossfading = false;
-            setlistIndex = index;
-            activeDeck = 'A';
-            nextDeck = 'B';
-
-            // 1. Load and play the selected track into Deck A (active)
-            const currentTrack = setlist[setlistIndex];
-            loadTrack(playerA, currentTrack.youtubeId, true, true);
-            playerA.seekTo(0, true); 
-
-            // 2. Load the next track (if exists) into Deck B (next)
-            if (setlistIndex + 1 < setlist.length) {
-                const nextTrack = setlist[setlistIndex + 1];
-                loadTrack(playerB, nextTrack.youtubeId, false, false); 
-            } else {
-                playerB.pauseVideo();
-                playerB.mute();
-            }
-
-            // Reset mix state to A=100%, B=0% (fader pos 0)
-            updateFader(0);
-            
-            // Update UI
-            highlightCurrentTrack(setlistIndex);
-            
-            // Restart the monitoring loop
-            timerInterval = setInterval(monitorMix, TIMER_INTERVAL_MS);
-
-            // Re-enable automation if it was on
-            if (!isAutomationEnabled) toggleAutomation();
-            updateAutomationUI(); 
-            
-            scrollToVideo(); 
-        }
-
         // ==============================================
         // VJ MIXER & AUTOMATION LOGIC
         // ==============================================
-
         /**
          * 1. Initialize YouTube Players
          */
@@ -784,243 +538,208 @@
                 playerVars: playerVars
             });
         }
-
         let readyCount = 0;
         function onPlayerReady(event) {
             readyCount++;
             event.target.setVolume(0); 
             event.target.mute(); 
-
+            // Set initial volume display
             document.getElementById(`vol-${event.target === playerA ? 'A' : 'B'}`).textContent = '0';
             
             if (readyCount === 2) {
                 isPlayersReady = true;
-                updateFader(0); // Initial display setup
-                setupFaderDrag();
             }
         }
         
         function onPlayerStateChange(event) {
             const deck = event.target === playerA ? 'A' : 'B';
-            const state = event.data;
-            const playBtn = document.getElementById(`play-${deck}`);
-            const pauseBtn = document.getElementById(`pause-${deck}`);
-            
-            // Visual feedback for transport buttons
-            if (state === YT.PlayerState.PLAYING) {
-                playBtn.classList.add('shadow-green-500/80');
-                pauseBtn.classList.remove('shadow-red-500/80');
-            } else if (state === YT.PlayerState.PAUSED || state === YT.PlayerState.BUFFERING) {
-                playBtn.classList.remove('shadow-green-500/80');
-                pauseBtn.classList.add('shadow-red-500/80');
-            } else if (state === YT.PlayerState.ENDED) {
-                 if (isAutomationEnabled && !isCrossfading && deck === activeDeck) {
+
+            // Update playing indicator
+            updatePlayerIndicator(deck, event.data === YT.PlayerState.PLAYING);
+
+            // Check if a video has ended (state 0) - this should usually be handled by the monitorMix loop, 
+            // but acts as a safeguard.
+            if (event.data === YT.PlayerState.ENDED) {
+                 if (isAutomationEnabled && !isCrossfading) {
+                    // Force the next track if it unexpectedly ends while the mixer is idle
                     forceNextTrack();
                  }
             }
         }
-
         /**
          * Video Error Handling: Skips the track and loads the next one.
          */
         function onPlayerError(event) {
             const deck = event.target === playerA ? 'A' : 'B';
             
+            // Error codes indicating video issues (100: not found, 101/150: embedding disabled/not playable)
             if (event.data === 100 || event.data === 101 || event.data === 150) {
                 console.error(`Video Error on DECK ${deck} (Code ${event.data}). Skipping track...`);
                 
+                // Only act if the error happened on the currently active track
                 if (deck === activeDeck) {
-                    displayError(`Video for Track ${setlistIndex + 1} (${setlist[setlistIndex]?.track || 'Unknown'}) is unavailable. Skipping to next track in 1 second...`);
+                    displayError(`Video for Track ${setlistIndex + 1} (${setlist[setlistIndex].track}) is unavailable. Skipping...`);
+                    // Use a short delay before forcing the next track to allow the UI error to display
                     setTimeout(forceNextTrack, 1000); 
                 } else {
+                    // If the error is on the NEXT deck, we swap its ID to the fallback ID to prevent crash
+                    // This way the next deck is ready, but plays a generic visual.
                     event.target.loadVideoById({videoId: FALLBACK_ID, startSeconds: 0});
-                    console.warn(`Next deck (${deck}) had an error, loading fallback video: ${FALLBACK_ID}.`);
+                    console.warn(`Next deck (${deck}) had an error, loading fallback video.`);
                 }
             }
         }
-
         /**
          * Forces the application to immediately swap to the next track.
          */
         function forceNextTrack() {
-             if (timerInterval) clearInterval(timerInterval);
-             isCrossfading = false;
-             updateAutomationUI();
-            
             if (setlistIndex >= setlist.length - 1) {
-                currentTrackTitle.textContent = "SETLIST COMPLETE";
-                currentTrackArtist.textContent = "Thank you for watching!";
+                // End of setlist
+                clearInterval(timerInterval);
+                currentTrackInfo.textContent = "Setlist Complete! Thank you for watching.";
                 getPlayer(activeDeck).pauseVideo();
                 getPlayer(activeDeck).setVolume(0);
                 updateFader(activeDeck === 'A' ? 0 : 100);
                 trackIndexDisplay.textContent = setlist.length;
-                mixStatus.textContent = 'FINISHED';
-                mixStatus.classList.remove('text-fuchsia-400', 'text-red-400');
+                isCrossfading = false;
+                updatePlayerIndicator(activeDeck, false);
                 return;
             }
-            
-            // Advance index and swap decks
+            // Immediately increment index and swap decks
             setlistIndex++;
+            
+            // Swap roles (Deck A becomes B, B becomes A)
             const oldActiveDeck = activeDeck;
             activeDeck = nextDeck;
             nextDeck = oldActiveDeck;
             
-            // Load the next-next track into the now-available 'next' deck
-            if (setlistIndex + 1 < setlist.length) {
-                const trackToLoad = setlist[setlistIndex + 1];
-                const loadDeck = nextDeck;
-                loadTrack(getPlayer(loadDeck), trackToLoad.youtubeId, false, false);
-            }
-            
-            // New active player starts playing and is unmuted
-            getPlayer(activeDeck).playVideo();
-            getPlayer(activeDeck).unMute();
-            
-            // Old deck is muted and paused
-            getPlayer(nextDeck).mute();
-            getPlayer(nextDeck).pauseVideo();
-            getPlayer(nextDeck).setVolume(0);
-            
             // Instant mix state update (100% on the new active deck)
             updateFader(activeDeck === 'A' ? 0 : 100); 
             
-            // Update UI
+            // The new active player starts playing and is unmuted
+            getPlayer(activeDeck).playVideo();
+            getPlayer(activeDeck).unMute();
+            updatePlayerIndicator(activeDeck, true);
+            
+            // The old deck is muted and paused
+            getPlayer(nextDeck).mute();
+            getPlayer(nextDeck).pauseVideo();
+            getPlayer(nextDeck).setVolume(0);
+            updatePlayerIndicator(nextDeck, false);
+            
+            // Load the next-next track into the now-available 'next' deck
+            if (setlistIndex + 1 < setlist.length) {
+                loadTrack(getPlayer(nextDeck), setlist[setlistIndex + 1].youtubeId, false, false);
+            }
+            // Update UI and reset automation state
+            trackIndexDisplay.textContent = setlistIndex + 1;
             highlightCurrentTrack(setlistIndex);
-
-            // Restart the monitoring loop
-            timerInterval = setInterval(monitorMix, TIMER_INTERVAL_MS);
+            isCrossfading = false;
         }
-
         /**
          * 2. Start the Mix after setlist generation.
          */
         function startMix() {
             if (!isPlayersReady || setlist.length === 0) return displayError("Players not ready or setlist is empty.");
             
+            // Initial state
             setlistIndex = 0;
             activeDeck = 'A';
             nextDeck = 'B';
             
+            // Load and play the first track (Deck A)
             loadTrack(playerA, setlist[0].youtubeId, true, true); 
+            updatePlayerIndicator('A', true);
+            updatePlayerIndicator('B', false);
+            
+            // Load the second track (Deck B)
             if (setlist.length > 1) {
                 loadTrack(playerB, setlist[1].youtubeId, false, false); 
             }
             
+            // Set initial mix state: A=100%, B=0%
             updateFader(0);
             highlightCurrentTrack(0);
-            
+            // Start the monitoring loop
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(monitorMix, TIMER_INTERVAL_MS);
             
+            // Ensure automation is on by default after generating a setlist
             if (!isAutomationEnabled) toggleAutomation();
-            updateAutomationUI();
         }
-
         /**
          * Loads a track onto a player.
          */
         function loadTrack(player, videoId, shouldPlay, shouldUnmute) {
             if (!player || !videoId) return;
+            // Load the track
             player.loadVideoById({videoId: videoId, startSeconds: 0});
             
+            // Set volume/mute state
             if (shouldUnmute) {
                 player.unMute();
             } else {
                 player.mute();
             }
             
+            // Start video playback
             if (shouldPlay) {
                 player.playVideo();
             } else {
                 player.pauseVideo();
             }
         }
-
         /**
          * 3. Main Loop: Monitors the active track and initiates crossfades.
          */
         function monitorMix() {
-            if (setlist.length === 0) return;
+            if (isCrossfading || !isAutomationEnabled || setlist.length === 0) return;
             const activePlayer = getPlayer(activeDeck);
             
             try {
-                const isPlaying = activePlayer.getPlayerState() === YT.PlayerState.PLAYING;
+                // If the active player is paused, the AI waits.
+                if (activePlayer.getPlayerState() !== YT.PlayerState.PLAYING) return;
                 
-                if (isDragging) {
-                    mixStatus.textContent = 'MANUAL FADER';
-                    return;
-                } else if (!isAutomationEnabled) {
-                    mixStatus.textContent = 'MANUAL OVERRIDE';
-                    return; 
-                } else if (!isPlaying) {
-                    mixStatus.textContent = 'PAUSED (WAITING)';
-                    return; 
-                } else {
-                    mixStatus.textContent = isCrossfading ? 'FADING...' : 'AUTO MIXING';
-                }
-
                 const currentTime = activePlayer.getCurrentTime();
                 const duration = activePlayer.getDuration();
                 const remainingTime = duration - currentTime;
-                
-                const currentTrackData = setlist[setlistIndex];
-
-                // Update UI display
-                currentTrackTitle.textContent = currentTrackData.track;
-                currentTrackArtist.textContent = currentTrackData.artist;
-                currentTimeDisplay.innerHTML = `<i data-lucide="clock" class="w-3 h-3 mr-1"></i> ${formatTime(currentTime)}`;
-                durationDisplay.innerHTML = `Total: ${formatTime(duration)} <i data-lucide="clock" class="w-3 h-3 ml-1"></i>`;
-
+                // Update status display
+                currentTrackInfo.textContent = `${setlistIndex + 1}. ${setlist[setlistIndex].track} - ${setlist[setlistIndex].artist}`;
+                currentTimeDisplay.textContent = formatTime(currentTime);
+                durationDisplay.textContent = formatTime(duration);
                 trackIndexDisplay.textContent = setlistIndex + 1;
-                if (typeof lucide !== 'undefined' && lucide.createIcons) {
-                    lucide.createIcons(); // Re-create icons for dynamic elements
-                }
-
-
-                // Update Progress Bar
-                const progressPercentage = (currentTime / duration) * 100;
-                trackProgressBar.style.width = `${progressPercentage}%`;
-                
-                // Update Fade Zone indicator
-                const fadeZoneWidth = (FADE_DURATION_SECONDS / duration) * 100;
-                fadeZone.style.width = `${fadeZoneWidth}%`;
-                fadeZone.classList.toggle('hidden', fadeZoneWidth < 1 || setlistIndex === setlist.length - 1);
-
-
-                if (!isCrossfading) {
-                    if (remainingTime <= FADE_DURATION_SECONDS && remainingTime > 0.1) {
+                // If the track is near its end, start the crossfade
+                if (remainingTime <= FADE_DURATION_SECONDS && remainingTime > 0.1) {
+                    // Check if we have a next track ready
+                    if (setlistIndex + 1 < setlist.length) {
+                        isCrossfading = true;
                         
-                        if (setlistIndex + 1 < setlist.length) {
-                            isCrossfading = true;
-                            updateAutomationUI();
-                            
-                            const nextPlayer = getPlayer(nextDeck);
-                            nextPlayer.playVideo(); 
-                            nextPlayer.unMute(); 
-                            
-                            startCrossfade(FADE_DURATION_SECONDS * 1000); 
-                            
-                            if (setlistIndex + 2 < setlist.length) {
-                                const trackToLoad = setlist[setlistIndex + 2];
-                                const loadDeck = activeDeck;
-                                loadTrack(getPlayer(loadDeck), trackToLoad.youtubeId, false, false);
-                            }
-
-                        } else if (remainingTime <= 0.1 && setlistIndex === setlist.length - 1) {
-                            clearInterval(timerInterval);
-                            currentTrackTitle.textContent = "SETLIST COMPLETE";
-                            currentTrackArtist.textContent = "THANK YOU FOR WATCHING!";
-                            activePlayer.pauseVideo();
-                            activePlayer.setVolume(0);
-                            updateFader(activeDeck === 'A' ? 0 : 100);
-                            trackIndexDisplay.textContent = setlist.length;
-                            mixStatus.textContent = 'FINISHED';
-                            mixStatus.classList.remove('text-fuchsia-400', 'text-red-400');
+                        // Start the next deck and crossfade
+                        const nextPlayer = getPlayer(nextDeck);
+                        // Start playing the next track just before the fade begins
+                        nextPlayer.playVideo(); 
+                        nextPlayer.unMute(); 
+                        
+                        startCrossfade(FADE_DURATION_SECONDS * 1000); 
+                        // Pre-load the track after next track
+                        if (setlistIndex + 2 < setlist.length) {
+                            const trackToLoad = setlist[setlistIndex + 2];
+                            const loadDeck = nextDeck; // The deck that will be free soon
+                            loadTrack(getPlayer(loadDeck), trackToLoad.youtubeId, false, false);
                         }
+                    } else if (remainingTime <= 0.1 && setlistIndex === setlist.length - 1) {
+                    // End of Setlist logic
+                        clearInterval(timerInterval);
+                        currentTrackInfo.textContent = "Setlist Complete! Thank you for watching.";
+                        activePlayer.pauseVideo();
+                        activePlayer.setVolume(0);
+                        updateFader(activeDeck === 'A' ? 0 : 100);
+                        trackIndexDisplay.textContent = setlist.length;
                     }
                 }
             } catch (e) {
-                console.warn("Player status error, attempting to continue monitoring:", e.message);
+                // Handle potential YT API errors during monitoring
+                console.warn("Player status error, attempting to restart monitoring:", e.message);
             }
         }
         
@@ -1029,26 +748,30 @@
          */
         function startCrossfade(durationMs) {
             let startTime = performance.now();
-            let startFaderValue = activeDeck === 'A' ? 0 : 100;
             let endFaderValue = activeDeck === 'A' ? 100 : 0;
-
+            let startFaderValue = activeDeck === 'A' ? 0 : 100;
             const animateFade = (currentTime) => {
-                if (!isAutomationEnabled || isDragging) {
+                // Automation check inside the loop is crucial for manual override
+                if (!isAutomationEnabled) {
                     isCrossfading = false;
-                    updateAutomationUI();
                     return; 
                 }
-
                 const elapsedTime = currentTime - startTime;
                 const progress = Math.min(1, elapsedTime / durationMs); 
-                
-                const faderValue = startFaderValue + (endFaderValue - startFaderValue) * progress;
+                let faderValue;
+                if (activeDeck === 'A') {
+                    // A -> B transition (0 to 100)
+                    faderValue = startFaderValue + (endFaderValue - startFaderValue) * progress;
+                } else {
+                    // B -> A transition (100 to 0)
+                    faderValue = startFaderValue - (startFaderValue - endFaderValue) * progress;
+                }
                 
                 updateFader(faderValue);
-
                 if (progress < 1) {
                     requestAnimationFrame(animateFade);
                 } else {
+                    // Fade is complete
                     completeCrossfade();
                 }
             };
@@ -1060,131 +783,99 @@
          * 5. Swaps deck roles and increments the setlist index.
          */
         function completeCrossfade() {
+            // Check if we actually have a next track to transition to
             if (setlistIndex >= setlist.length - 1) {
+                 // Final track finished
                  forceNextTrack();
                  return;
             }
-
+            // Update index and UI
             setlistIndex++;
+            trackIndexDisplay.textContent = setlistIndex + 1;
             highlightCurrentTrack(setlistIndex);
-
+            // Swap deck roles
             const oldActiveDeck = activeDeck;
             activeDeck = nextDeck;
             nextDeck = oldActiveDeck;
             
+            // Mute and pause the deck that just finished its track
             const oldActivePlayer = getPlayer(nextDeck);
             oldActivePlayer.mute();
             oldActivePlayer.pauseVideo();
             oldActivePlayer.setVolume(0);
-
+            updatePlayerIndicator(nextDeck, false);
+            
+            // The new active deck should now be visually active
+            updatePlayerIndicator(activeDeck, true);
+            
+            // If there's another track, pre-load the next-next one
+            if (setlistIndex + 1 < setlist.length) {
+                const trackToLoad = setlist[setlistIndex + 1];
+                loadTrack(getPlayer(nextDeck), trackToLoad.youtubeId, false, false);
+            }
             isCrossfading = false;
-            updateAutomationUI();
         }
-
         /**
-         * 6. Core Logic: Updates volume, opacity, and fader UI based on fader position (0-100).
+         * 6. Core Logic: Updates volume and opacity based on fader position (0-100).
          */
         function updateFader(faderValue) {
             const faderInt = Math.round(faderValue);
-
+            // DECK A: Fades out as fader goes from 0 (100%) to 100 (0%)
             const a_mix = 100 - faderInt; 
+            
+            // DECK B: Fades in as fader goes from 0 (0%) to 100 (100%)
             const b_mix = faderInt; 
             const b_opacity = b_mix / 100;
 
+            // Fader Visual Glow Logic: 
+            // 0-20 (mostly A) -> Glow A
+            // 80-100 (mostly B) -> Glow B
+            faderDisplay.classList.remove('fader-glow-A', 'fader-glow-B');
+            faderWrapper.classList.remove('fader-glow-A', 'fader-glow-B');
+
+            if (faderInt < 20) {
+                // Focus on A
+                faderDisplay.classList.add('bg-blue-500');
+                faderDisplay.classList.remove('bg-orange-500');
+                faderWrapper.classList.add('fader-glow-A');
+            } else if (faderInt > 80) {
+                 // Focus on B
+                faderDisplay.classList.add('bg-orange-500');
+                faderDisplay.classList.remove('bg-blue-500');
+                faderWrapper.classList.add('fader-glow-B');
+            } else {
+                // Crossfading/Neutral zone (use a blend color or just blue as the base)
+                faderDisplay.classList.add('bg-blue-500');
+                faderDisplay.classList.remove('bg-orange-500');
+            }
+
             // Apply Volume Control (YouTube volume is 0-100)
-            if (playerA) {
-                playerA.setVolume(a_mix); 
-                if (a_mix > 0 && playerA.isMuted()) playerA.unMute();
-            }
-            if (playerB) {
-                playerB.setVolume(b_mix);
-                if (b_mix > 0 && playerB.isMuted()) playerB.unMute();
-            }
-
-            // Apply Opacity Control (Deck B is the top layer)
-            deckB.style.opacity = b_opacity;
-
-            // Update manual volume slider display to reflect the current automated mix
+            playerA.setVolume(a_mix); 
+            playerB.setVolume(b_mix);
+            // Update manual volume display to reflect the current automated mix
             document.getElementById('vol-A').textContent = a_mix;
             document.getElementById('vol-B').textContent = b_mix;
             
-            // Update UI feedback (Fader handle position)
-            // The handle position is 0% to 100% of the container width
-            faderHandle.style.left = `${faderInt}%`;
-            
-            // Update fader handle color based on which deck is dominant
-            if (faderInt < 40) {
-                 faderHandle.style.boxShadow = `0 0 10px var(--primary-neon), inset 0 0 5px rgba(0, 0, 0, 0.5)`;
-                 faderHandle.style.borderColor = 'var(--primary-neon)';
-            } else if (faderInt > 60) {
-                 faderHandle.style.boxShadow = `0 0 10px var(--accent-neon), inset 0 0 5px rgba(0, 0, 0, 0.5)`;
-                 faderHandle.style.borderColor = 'var(--accent-neon)';
-            } else {
-                 faderHandle.style.boxShadow = `0 0 10px #fff, inset 0 0 5px rgba(0, 0, 0, 0.5)`;
-                 faderHandle.style.borderColor = '#fff';
-            }
-
+            // Apply Opacity Control (Deck B is the top layer)
+            deckB.style.opacity = b_opacity;
+            deckA.style.opacity = 1;
+            // Update UI feedback
             mixLevelA.textContent = `${a_mix}%`;
             mixLevelB.textContent = `${b_mix}%`;
-        }
+            faderDisplay.style.width = `${faderInt}%`;
 
-        // ==============================================
-        // DRAG AND DROP FADER LOGIC
-        // ==============================================
-
-        function handleDrag(e) {
-            e.preventDefault(); 
-            if (!isDragging) return;
-
-            setManualControl(); 
-
-            // Calculate mouse position relative to the container
-            const rect = faderContainer.getBoundingClientRect();
-            let clientX = e.clientX || e.touches[0].clientX; // Handle touch/mouse
-            
-            let x = clientX - rect.left; 
-            
-            // Clamp position between 0 and container width
-            x = Math.max(0, Math.min(x, rect.width));
-
-            // Calculate percentage (0 to 100)
-            const faderValue = (x / rect.width) * 100;
-            
-            updateFader(faderValue);
-        }
-
-        function startDrag(e) {
-            e.preventDefault(); 
-            isDragging = true;
-            faderHandle.classList.add('active:cursor-grabbing'); 
-            document.body.style.cursor = 'grabbing';
-            // Immediately apply fader update on start drag to handle touch targets
-            handleDrag(e);
-        }
-
-        function endDrag() {
-            isDragging = false;
-            faderHandle.classList.remove('active:cursor-grabbing'); 
-            document.body.style.cursor = 'default';
-        }
-
-        function setupFaderDrag() {
-            // Mouse Events
-            faderHandle.addEventListener('mousedown', startDrag);
-            document.addEventListener('mousemove', handleDrag);
-            document.addEventListener('mouseup', endDrag);
-
-            // Touch Events
-            faderHandle.addEventListener('touchstart', (e) => startDrag(e), {passive: false});
-            document.addEventListener('touchmove', (e) => handleDrag(e), {passive: false});
-            document.addEventListener('touchend', endDrag);
+            // Update player indicators during a manual override or at the endpoints of the mix
+            if (!isAutomationEnabled) {
+                updatePlayerIndicator('A', playerA.getPlayerState() === YT.PlayerState.PLAYING);
+                updatePlayerIndicator('B', playerB.getPlayerState() === YT.PlayerState.PLAYING);
+            }
         }
 
         // ==============================================
         // EVENT LISTENERS
         // ==============================================
         generateButton.addEventListener('click', generateSetlist);
-
+        toggleAutomationBtn.addEventListener('click', toggleAutomation);
     </script>
 </body>
 </html>
