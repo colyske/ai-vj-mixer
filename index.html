@@ -3,174 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI VJ Automixer: Kinetic Console Interface</title>
+    <title>AI VJ Automixer: Hyper-Kinetic Console</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        /* ==================== 
+           COLOR & THEME CONFIG 
+           ==================== */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Orbitron:wght@400;700&display=swap');
         :root {
-            --primary-color: #3b82f6; /* Blue 500 (A) */
-            --accent-color: #f97316; /* Orange 500 (B) */
-            --background-color: #0c0a09; /* Stone 950 */
-            --panel-bg: #161b22;
+            /* Primary Deck A (Electric Blue) */
+            --primary-color: #06b6d4; /* Cyan 500 */
+            /* Accent Deck B (Safety Orange/Red) */
+            --accent-color: #f97316; /* Orange 600 */
+            /* Status/Cue (Emerald Green) */
+            --cue-color: #10b981; 
+            /* Deep Background (Industrial Black) */
+            --background-color: #000000; 
+            --panel-bg: #0d0d12; /* Near Black Panel */
+            --grid-line: #1e293b;
         }
+        
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--background-color); 
-            color: #e5e7eb;
+            color: #d1d5db; /* Light Gray Text */
             min-height: 100vh;
+            /* Subtle grid background for industrial feel */
+            background-image: linear-gradient(to right, var(--grid-line) 1px, transparent 1px), 
+                              linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+            background-size: 50px 50px;
         }
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 1rem;
+
+        /* ==================== 
+           GENERAL EFFECTS 
+           ==================== */
+        .panel-console {
+            background-color: var(--panel-bg);
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), inset 0 0 5px rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
         }
-        /* --- VJ Mixer Styles --- */
+        
+        /* --- VJ Mixer Monitor --- */
         .video-wrapper {
-            position: relative;
+            position: relative; /* CRITICAL: Stacking context for children */
             width: 100%;
             aspect-ratio: 16 / 9;
             overflow: hidden;
-            border-radius: 16px; /* Slightly more rounded */
-            box-shadow: 0 0 50px rgba(59, 130, 246, 0.2), 0 10px 40px rgba(0, 0, 0, 0.8); /* Stronger shadow */
+            border-radius: 12px;
+            /* Intense glow effect */
+            box-shadow: 0 0 100px rgba(6, 182, 212, 0.3), 0 0 50px rgba(249, 115, 22, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.1); 
             background-color: #000;
         }
-        .video-container {
-            position: absolute;
+        
+        /* CRITICAL FIX: Stacking and Sizing for Blending */
+        .video-wrapper .video-container {
+            position: absolute; /* Place decks on top of each other */
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease; /* Ensure smooth blending */
         }
+        
+        /* Ensure the YouTube player iframe fills its container */
         #player-A, #player-B {
             width: 100%;
             height: 100%;
-            pointer-events: none;
         }
-        .input-style {
-            background-color: #1c1917; 
-            border: 1px solid #44403c;
-            color: #f9f9f9;
-            transition: border-color 0.2s;
-        }
-        .input-style:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-        }
-        .glow-button {
-            transition: all 0.2s ease;
-            background: linear-gradient(90deg, #1d4ed8, #0ea5e9);
-            box-shadow: 0 0 15px #0ea5e9;
-        }
-        .glow-button:hover {
-            box-shadow: 0 0 25px #0ea5e9, 0 0 10px rgba(249, 115, 22, 0.8);
-            transform: scale(1.02); /* Subtle lift */
+        /* Target the actual iframe injected by YouTube API */
+        #player-A iframe, #player-B iframe {
+            width: 100%;
+            height: 100%;
         }
 
-        /* --- Custom Animations --- */
 
-        /* Pulsing effect for the currently playing track */
-        @keyframes track-pulse {
-            0% { background-color: rgba(59, 130, 246, 0.1); }
-            50% { background-color: rgba(59, 130, 246, 0.3); }
-            100% { background-color: rgba(59, 130, 246, 0.1); }
-        }
-        .track-active {
-            animation: track-pulse 2s infinite alternate;
-        }
-        /* Glow for the active deck indicator */
-        @keyframes player-glow {
-            0% { box-shadow: 0 0 5px currentColor; opacity: 1; }
-            50% { box-shadow: 0 0 15px currentColor; opacity: 0.8; }
-            100% { box-shadow: 0 0 5px currentColor; opacity: 1; }
-        }
-        .playing-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 0.5rem;
-        }
-        .indicator-A.playing {
-            color: var(--primary-color);
-            background-color: var(--primary-color);
-            animation: player-glow 1.5s infinite ease-in-out;
-        }
-        .indicator-B.playing {
-            color: var(--accent-color);
-            background-color: var(--accent-color);
-            animation: player-glow 1.5s infinite ease-in-out;
-        }
+        /* ==================== 
+           CUSTOM CONTROLS (SKEUOMORPHIC)
+           ==================== */
 
-        /* Fader Display Enhancement */
-        #fader-display-wrapper {
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
-            border: 1px solid #333;
+        /* --- Vertical Fader Track (Volume) --- */
+        .vertical-slider-container {
+            width: 30px;
+            height: 120px;
+            padding: 5px;
+            background: #111827;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8), 0 0 3px rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .fader-glow {
-            transition: box-shadow 0.2s ease;
-        }
-        .fader-glow-A {
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
-        }
-        .fader-glow-B {
-            box-shadow: 0 0 10px rgba(249, 115, 22, 0.6);
-        }
-
-        /* Volume Slider Styling */
-        .volume-slider {
+        .vertical-slider {
             -webkit-appearance: none;
+            appearance: none;
+            width: 120px; 
+            height: 15px; /* Thinner track */
+            border-radius: 8px;
+            background: #000; 
+            outline: none;
+            transform: rotate(-90deg);
+            transform-origin: center;
+        }
+
+        /* Vertical Fader Knob (Shared Style) */
+        .vertical-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 5px;
+            border: 2px solid #fff;
+            cursor: grab;
+            transition: all 0.1s;
+        }
+        /* Deck A Vertical Fader (Blue) */
+        .slider-A::-webkit-slider-thumb {
+            background: var(--primary-color);
+            box-shadow: 0 0 12px var(--primary-color), inset 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        /* Deck B Vertical Fader (Orange) */
+        .slider-B::-webkit-slider-thumb {
+            background: var(--accent-color);
+            box-shadow: 0 0 12px var(--accent-color), inset 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        /* --- Crossfader Styling (The most important component) --- */
+        #crossfader-container {
+            height: 50px;
+            background: #000;
+            border-radius: 25px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            position: relative;
+        }
+        #crossfader {
+            -webkit-appearance: none;
+            appearance: none;
             width: 100%;
             height: 8px;
+            background: linear-gradient(to right, var(--primary-color) 0%, #374151 50%, var(--accent-color) 100%);
             border-radius: 4px;
             outline: none;
-            opacity: 0.8;
-            transition: opacity .2s;
+            z-index: 1;
         }
-        .volume-slider:hover {
+        #crossfader::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 35px;
+            height: 50px; /* Large, realistic knob/handle */
+            background: #4b5563; /* Dark gray handle body */
+            border: 2px solid #fff;
+            border-radius: 6px;
+            cursor: grab;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(255, 255, 255, 0.3);
+            transition: box-shadow 0.1s;
+            z-index: 10;
+        }
+        /* Add color to the knob based on the dominant side */
+        .fader-a-side::-webkit-slider-thumb {
+             box-shadow: 0 0 15px var(--primary-color), inset 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        .fader-b-side::-webkit-slider-thumb {
+             box-shadow: 0 0 15px var(--accent-color), inset 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        #crossfader::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            /* Add an intense glow on grab */
+             box-shadow: 0 0 30px var(--cue-color), inset 0 0 10px #fff;
+        }
+
+        /* --- Control Buttons --- */
+        .control-button {
+            border: 2px solid #374151;
+            background: #1f2937;
+            box-shadow: inset 0 5px 10px rgba(0, 0, 0, 0.8), 0 5px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.1s ease;
+            position: relative;
+        }
+        .control-button:active {
+            transform: translateY(2px);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+            filter: brightness(0.8);
+        }
+        .control-button.play-btn {
+            background-color: #065f46;
+            color: var(--cue-color);
+            border-color: #10b981;
+        }
+        .control-button.pause-btn {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+            border-color: #dc2626;
+        }
+        .control-button.load-btn {
+             background-color: #1e3a8a;
+             color: #93c5fd;
+             border-color: #60a5fa;
+             font-size: 0.75rem;
+        }
+        .control-button.cue-btn {
+            background-color: #4c0519;
+            color: #fbcfe8;
+            border-color: #e879f9;
+        }
+        
+        /* --- Setlist Visuals --- */
+        .track-active {
+            background-color: #1d4ed8; /* Stronger blue background */
+            border-left: 6px solid #facc15 !important; /* Yellow cue color */
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.5);
+            font-weight: bold;
+            color: #fff;
+        }
+        .track-list-item {
+            border-left: 6px solid transparent;
+            border-radius: 4px;
+        }
+        .track-list-item:hover {
+             background-color: #111827; 
+        }
+
+        /* Indicator Animation */
+        .playing-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 8px;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        .playing-indicator.playing {
             opacity: 1;
+            animation: pulse-glow 1s infinite alternate;
         }
-        /* Deck A Slider (Blue) */
-        .slider-A {
-            background: #3b82f6; /* Blue 500 */
-        }
-        .slider-A::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px; /* Slightly bigger thumb */
-            height: 18px;
-            border-radius: 50%;
-            background: #1e40af; /* Blue 800 */
-            border: 2px solid #fff;
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
-        /* Deck B Slider (Orange) */
-        .slider-B {
-            background: #f97316; /* Orange 500 */
-        }
-        .slider-B::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px; /* Slightly bigger thumb */
-            height: 18px;
-            border-radius: 50%;
-            background: #c2410c; /* Orange 800 */
-            border: 2px solid #fff;
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        .indicator-A.playing { background-color: var(--primary-color); box-shadow: 0 0 8px var(--primary-color); }
+        .indicator-B.playing { background-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+
+        @keyframes pulse-glow {
+            from { opacity: 0.5; }
+            to { opacity: 1; filter: brightness(1.5); }
         }
     </style>
 </head>
 <body class="flex flex-col items-center p-4">
-    <h1 class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-8">
-        AI VJ Automixer Console
+    <!-- Title with strong gradient and hyper-contrast -->
+    <h1 class="text-6xl font-extrabold tracking-tighter font-['Orbitron'] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-600 mb-8 [text-shadow:_0_0_15px_rgba(6,182,212,0.8)]">
+        VJ AUTOMIXER <span class="text-3xl font-light">// KINETIC CONSOLE</span>
     </h1>
+
     <!-- Video Player Section -->
-    <div id="vj-section" class="w-full max-w-4xl mb-8" style="display: none;">
+    <div id="vj-section" class="w-full max-w-7xl mb-10" style="display: none;">
         <div class="video-wrapper">
             <!-- Deck A (Bottom Layer) -->
             <div id="deck-A" class="video-container" style="opacity: 1;">
@@ -181,100 +269,184 @@
                 <div id="player-B"></div>
             </div>
         </div>
-        <!-- Deck Controls & VJ Status -->
-        <div class="mt-4 p-4 bg-\[#161b22\] rounded-xl shadow-lg border border-gray-700">
-            <div class="flex justify-between items-start mb-4">
-                <p class="text-xl font-extrabold text-gray-100">
-                    <span id="current-track-info">Waiting for setlist...</span>
+        
+        <!-- Console Controls Panel -->
+        <div class="mt-6 p-6 panel-console">
+            
+            <!-- Top Status Bar & Automation Toggle -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 border-b border-gray-700 pb-3">
+                <p class="text-lg sm:text-2xl font-mono font-extrabold text-white mb-2 sm:mb-0">
+                    <span class="text-xs text-cue-color mr-2 font-sans font-bold tracking-widest">NOW PLAYING:</span>
+                    <span id="current-track-info" class="text-sm sm:text-lg text-gray-300">Waiting for setlist...</span>
                 </p>
-                <button id="toggle-automation" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full shadow-md transition duration-200 text-sm">
-                    Automation ON (Active)
+                <button id="toggle-automation" class="px-5 py-2 bg-red-800 hover:bg-red-700 text-white font-bold rounded-full shadow-lg transition duration-200 text-sm">
+                    Automation OFF (Manual)
                 </button>
             </div>
             
-            <!-- Deck Controls -->
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <!-- Deck A Controls (Blue Theme) -->
-                <div id="controls-A" class="bg-blue-900/20 p-3 rounded-lg border border-blue-800 shadow-xl transition-all duration-300">
-                    <h3 class="font-extrabold text-blue-400 mb-2 flex items-center">
-                        DECK A 
-                        <span id="indicator-A" class="playing-indicator indicator-A"></span>
-                    </h3>
-                    <button onclick="manualControl('A', 'play')" class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-white text-sm mr-2 shadow-md">Play</button>
-                    <button onclick="manualControl('A', 'pause')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-white text-sm shadow-md">Pause</button>
-                    <input type="range" min="0" max="100" value="0" oninput="manualControl('A', 'volume', this.value)" class="volume-slider slider-A mt-3">
-                    <p class="text-sm text-gray-300 mt-1 font-mono">Volume: <span id="vol-A" class="font-extrabold text-blue-300">0</span>%</p>
+            <!-- Controls Grid: Deck A | Mixer | Deck B -->
+            <div class="grid grid-cols-3 gap-8 mb-4">
+                
+                <!-- 1. DECK A CONTROLS (Cyan/Blue) -->
+                <div id="controls-A" class="bg-cyan-900/10 p-5 rounded-xl border border-cyan-800 shadow-xl shadow-cyan-900/30 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-extrabold text-cyan-400 mb-3 flex items-center text-xl border-b border-cyan-900 pb-2">
+                            DECK A (VIDEO 1)
+                            <span id="indicator-A" class="playing-indicator indicator-A"></span>
+                        </h3>
+                        <p class="text-xs text-gray-400 font-mono mb-2">MIX LEVEL: <span id="mix-level-A" class="font-bold text-cyan-300">0%</span></p>
+                        <p class="text-xs text-gray-400 font-mono">TIME: <span id="time-A" class="font-bold text-xl text-cyan-300 font-['Orbitron']">0:00</span></p>
+                    </div>
+
+                    <!-- Volume Fader & Mute Button -->
+                    <div class="flex items-center mt-6">
+                        <button id="mute-A" class="control-button px-3 py-2 rounded-lg text-sm text-gray-400 mr-4 cue-btn">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l6-6v16l-6-6zM17 12a4 4 0 01-8 0"></path></svg>
+                        </button>
+                        <div class="vertical-slider-container">
+                            <input type="range" min="0" max="100" value="100" id="volume-A-slider" class="vertical-slider slider-A">
+                        </div>
+                        <span class="text-lg text-gray-400 ml-4 font-mono font-bold">VOL</span>
+                    </div>
+
+                    <!-- Playback Controls -->
+                    <div class="mt-6 flex space-x-2">
+                        <button id="play-A" class="control-button play-btn px-4 py-3 rounded-xl text-white font-bold flex-1 flex items-center justify-center text-lg">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.26-1.26L12 13.59l2.28-2.28 1.26 1.26L12 16.11l-3.54-3.53zM15.5 4l-.71-.71c-.39-.39-.99-.39-1.38 0l-.71.71H9.3c-.39 0-.77.15-1.06.44l-.71.71L7.5 5.5h9l-.79-.79z"></path></svg>
+                        </button>
+                        <button id="pause-A" class="control-button pause-btn px-4 py-3 rounded-xl text-white font-bold flex-1 flex items-center justify-center text-lg">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                        </button>
+                    </div>
                 </div>
-                <!-- Deck B Controls (Orange Theme) -->
-                <div id="controls-B" class="bg-orange-900/20 p-3 rounded-lg border border-orange-800 shadow-xl transition-all duration-300">
-                    <h3 class="font-extrabold text-orange-400 mb-2 flex items-center">
-                        DECK B
-                        <span id="indicator-B" class="playing-indicator indicator-B"></span>
+                
+                <!-- 2. CENTRAL MIXER CONTROLS -->
+                <div class="bg-gray-950/50 p-5 rounded-xl border border-gray-700 shadow-2xl shadow-gray-900/80 flex flex-col justify-between items-center">
+                    <h3 class="font-extrabold text-white mb-4 text-2xl font-['Orbitron']">
+                        MAIN MIXER
                     </h3>
-                    <button onclick="manualControl('B', 'play')" class="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-white text-sm mr-2 shadow-md">Play</button>
-                    <button onclick="manualControl('B', 'pause')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-white text-sm shadow-md">Pause</button>
-                    <input type="range" min="0" max="100" value="0" oninput="manualControl('B', 'volume', this.value)" class="volume-slider slider-B mt-3">
-                    <p class="text-sm text-gray-300 mt-1 font-mono">Volume: <span id="vol-B" class="font-extrabold text-orange-300">0</span>%</p>
+                    
+                    <!-- VU Meter Style Display -->
+                    <div id="fader-display-wrapper" class="w-full h-8 rounded-full overflow-hidden mb-6 bg-gray-900 border-2 border-gray-700 shadow-inner">
+                        <div id="fader-display" class="h-full rounded-full transition-all duration-100 ease-linear flex justify-between items-center px-2">
+                             <span id="fader-label-A" class="text-xs font-bold text-gray-300">A</span>
+                             <span id="fader-label-B" class="text-xs font-bold text-gray-300">B</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Crossfader (Interactive) -->
+                    <div id="crossfader-container" class="w-full">
+                        <input type="range" min="0" max="100" value="0" id="crossfader" class="w-full fader-a-side">
+                    </div>
+                    <div class="flex justify-between w-full text-sm text-gray-400 mt-2 font-mono">
+                        <span class="text-cyan-400 font-bold">100% A</span>
+                        <span class="text-red-400 font-bold">100% B</span>
+                    </div>
+
+                    <!-- Global Status -->
+                    <div class="w-full mt-6 pt-3 border-t border-gray-800 text-center">
+                        <p class="text-md text-gray-400 font-mono">
+                            SESSION TIME: <span id="current-time-display" class="font-bold text-xl" style="color:var(--cue-color)">0:00</span> / <span id="duration-display" class="font-bold text-xl">0:00</span>
+                        </p>
+                         <p class="text-sm text-gray-500 mt-1">
+                            TRACK <span id="track-index-display" class="font-bold text-lg text-white">0</span> OF 20
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 3. DECK B CONTROLS (Orange/Red) -->
+                <div id="controls-B" class="bg-orange-900/10 p-5 rounded-xl border border-orange-800 shadow-xl shadow-orange-900/30 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-extrabold text-orange-400 mb-3 flex items-center justify-end text-xl border-b border-orange-900 pb-2">
+                            DECK B (VIDEO 2)
+                            <span id="indicator-B" class="playing-indicator indicator-B"></span>
+                        </h3>
+                         <p class="text-xs text-gray-400 font-mono mb-2 text-right">MIX LEVEL: <span id="mix-level-B" class="font-bold text-orange-300">0%</span></p>
+                        <p class="text-xs text-gray-400 font-mono text-right">TIME: <span id="time-B" class="font-bold text-xl text-orange-300 font-['Orbitron']">0:00</span></p>
+                    </div>
+                    
+                    <!-- Volume Fader & Mute Button -->
+                    <div class="flex items-center mt-6 justify-end">
+                        <span class="text-lg text-gray-400 mr-4 font-mono font-bold">VOL</span>
+                        <div class="vertical-slider-container">
+                            <input type="range" min="0" max="100" value="0" id="volume-B-slider" class="vertical-slider slider-B">
+                        </div>
+                        <button id="mute-B" class="control-button px-3 py-2 rounded-lg text-sm text-gray-400 ml-4 cue-btn">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l6-6v16l-6-6zM17 12a4 4 0 01-8 0"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Playback Controls -->
+                    <div class="mt-6 flex space-space-x-2">
+                        <button id="play-B" class="control-button play-btn px-4 py-3 rounded-xl text-white font-bold flex-1 flex items-center justify-center text-lg">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.26-1.26L12 13.59l2.28-2.28 1.26 1.26L12 16.11l-3.54-3.53zM15.5 4l-.71-.71c-.39-.39-.99-.39-1.38 0l-.71.71H9.3c-.39 0-.77.15-1.06.44l-.71.71L7.5 5.5h9l-.79-.79z"></path></svg>
+                        </button>
+                        <button id="pause-B" class="control-button pause-btn px-4 py-3 rounded-xl text-white font-bold flex-1 flex items-center justify-center text-lg">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <!-- Fader Display -->
-            <div class="bg-gray-800 p-3 rounded-lg flex items-center justify-center space-x-4">
-                <span class="text-sm font-medium text-blue-400">A Mix: <span id="mix-level-A" class="font-bold">100%</span></span>
-                <div id="fader-display-wrapper" class="w-3/4 h-3 bg-gray-900 rounded-full overflow-hidden">
-                    <div id="fader-display" class="h-full bg-blue-500 rounded-full transition-all duration-100 ease-linear fader-glow" style="width: 0%;"></div>
-                </div>
-                <span class="text-sm font-medium text-orange-400">B Mix: <span id="mix-level-B" class="font-bold">0%</span></span>
-            </div>
-            <p class="text-sm text-center text-gray-400 mt-3 font-mono">
-                TIME: <span id="current-time-display" class="font-bold text-lg text-green-400">0:00</span> / <span id="duration-display">0:00</span> (Track <span id="track-index-display">0</span> of 20)
-            </p>
         </div>
     </div>
+    
     <!-- AI Generation & Input Section -->
-    <div id="input-section" class="w-full max-w-lg mb-8 p-6 bg-\[#1c1917\] rounded-xl shadow-2xl border border-blue-900/50">
-        <h2 class="text-2xl font-bold text-blue-400 mb-4">Setlist AI</h2>
-        <label for="location" class="block text-sm font-medium text-gray-300 mb-1">Club Location</label>
-        <input type="text" id="location" placeholder="e.g., Warehouse District, Berlin" value="" class="input-style w-full p-3 rounded-lg mb-3">
+    <div id="input-section" class="w-full max-w-4xl mb-8 p-6 panel-console border-cyan-900/50">
+        <h2 class="text-3xl font-bold text-cyan-400 mb-4 border-b border-cyan-800 pb-2">SETLIST AI GENERATOR</h2>
+        <label for="location" class="block text-sm font-medium text-gray-300 mb-1">Club Location / Vibe</label>
+        <input type="text" id="location" placeholder="e.g., Underground Rave, Tokyo" value="" class="input-style w-full p-3 rounded-lg mb-3 bg-gray-900 border-gray-700 text-white shadow-inner">
         
         <label for="theme" class="block text-sm font-medium text-gray-300 mb-1">Theme Night / Genre Focus</label>
-        <input type="text" id="theme" placeholder="e.g., 90s Industrial Techno and Dark Minimal" value="" class="input-style w-full p-3 rounded-lg mb-4">
+        <input type="text" id="theme" placeholder="e.g., Minimal Psytrance and Abstract Glitch Art" value="" class="input-style w-full p-3 rounded-lg mb-4 bg-gray-900 border-gray-700 text-white shadow-inner">
         
-        <button id="generateButton" class="glow-button w-full p-4 text-white font-bold rounded-xl text-lg flex items-center justify-center">
-            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Generate 20-Track Setlist
+        <button id="generateButton" class="w-full p-4 text-white font-bold rounded-xl text-lg flex items-center justify-center transition control-button" style="background-color: #06b6d4; border-color: #0891b2; box-shadow: 0 0 20px #06b6d4;">
+            <svg class="w-6 h-6 mr-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            INITIATE 20-TRACK SEQUENCE
         </button>
-        <p id="default-info" class="text-center text-xs text-gray-400 mt-2">
-            *Leave both fields empty to generate a "Trending Songs" setlist.
+        <p id="default-info" class="text-center text-xs text-gray-500 mt-3">
+            *Leave fields empty for a global 'Trending Visuals' mix.
         </p>
-        <div id="loadingIndicator" class="hidden mt-4 text-center text-blue-400">
-            <svg class="animate-spin inline-block h-5 w-5 mr-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            <span id="loadingText">Generating setlist...</span>
+        <div id="loadingIndicator" class="hidden mt-4 text-center text-xl font-mono" style="color:var(--cue-color)">
+            <svg class="animate-spin inline-block h-6 w-6 mr-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <span id="loadingText" class="font-mono">Generating setlist...</span>
         </div>
-        <div id="errorBox" class="hidden mt-4 p-3 bg-red-900 border border-red-700 text-red-300 rounded-lg text-sm">
-            <p class="font-semibold">Error:</p>
+        <div id="errorBox" class="hidden mt-4 p-3 bg-red-900 border border-red-700 text-red-300 rounded-lg text-sm font-mono shadow-xl">
+            <p class="font-semibold">SYSTEM ALERT:</p>
             <p id="errorMessage"></p>
         </div>
     </div>
     
     <!-- Setlist Display Section -->
-    <div id="setlist-display" class="w-full max-w-4xl mt-6 p-6 bg-\[#161b22\] rounded-xl shadow-2xl border border-gray-700" style="display: none;">
-        <h2 class="text-2xl font-bold text-accent-color mb-4">Generated Setlist (20 Tracks)</h2>
-        <p id="ai-insight" class="text-blue-300 italic mb-4">---</p>
-        <ol id="track-list" class="space-y-2"></ol>
+    <div id="setlist-display" class="w-full max-w-4xl mt-6 p-6 panel-console border-orange-900/50" style="display: none;">
+        <h2 class="text-3xl font-bold text-orange-400 mb-4 border-b border-orange-800 pb-2">SEQUENCE LOG (20 TRACKS)</h2>
+        <p id="ai-insight" class="text-cyan-300 italic mb-4 font-mono">---</p>
+        <ol id="track-list" class="space-y-1"></ol>
     </div>
+
+    <!-- Cue Player and Status (Hidden) -->
+    <div id="player-C-container" style="display: none;">
+        <div id="player-C"></div>
+    </div>
+    <div id="cue-status-display" class="fixed bottom-4 right-4 p-4 bg-purple-900 border-2 border-purple-600 rounded-lg shadow-2xl text-white font-mono z-50 transition-transform duration-500 transform translate-x-full opacity-0" style="box-shadow: 0 0 20px #d946ef;">
+        <!-- Cue Status will be inserted here -->
+    </div>
+    
     <!-- YouTube IFrame Player API Script -->
     <script src="https://www.youtube.com/iframe_api"></script>
+    
+    <!-- APPLICATION SCRIPT -->
     <script>
         // ==============================================
         // CONFIGURATION & GLOBAL STATE
         // ==============================================
-        const apiKey = "AIzaSyAv5NcneJ7HhAP4yH9cF2s-U5Z-PlEH8QA"; // Canvas will provide this key at runtime
+        const apiKey = "AIzaSyAv5NcneJ7HhAP4yH9cF2s-U5Z-PlEH8QA"; 
         const AI_MODEL = "gemini-2.5-flash-preview-09-2025";
         const TRACK_COUNT = 20;
         const FADE_DURATION_SECONDS = 8; 
         const TIMER_INTERVAL_MS = 250; 
-        const FALLBACK_ID = 'dQw4w9WgXcQ'; // Rick Astley - Never Gonna Give You Up (Good fallback visual)
-        let playerA, playerB;
+        const FALLBACK_ID = 'dQw4w9WgXcQ'; // Rick Astley - Never Gonna Give You Up (Always available)
+        
+        let playerA, playerB, playerC;
         let isPlayersReady = false;
         let setlist = [];
         let setlistIndex = 0;
@@ -282,37 +454,76 @@
         let nextDeck = 'B';
         let timerInterval = null; 
         let isCrossfading = false;
-        let isAutomationEnabled = true;
-        // UI Elements
-        const faderDisplay = document.getElementById('fader-display');
-        const faderWrapper = document.getElementById('fader-display-wrapper');
-        const deckA = document.getElementById('deck-A');
-        const deckB = document.getElementById('deck-B');
-        const currentTrackInfo = document.getElementById('current-track-info');
-        const mixLevelA = document.getElementById('mix-level-A');
-        const mixLevelB = document.getElementById('mix-level-B');
-        const currentTimeDisplay = document.getElementById('current-time-display');
-        const durationDisplay = document.getElementById('duration-display');
-        const trackIndexDisplay = document.getElementById('track-index-display');
-        const trackList = document.getElementById('track-list');
-        const aiInsight = document.getElementById('ai-insight');
-        const generateButton = document.getElementById('generateButton');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const loadingText = document.getElementById('loadingText');
-        const errorBox = document.getElementById('errorBox');
-        const errorMessage = document.getElementById('errorMessage');
-        const toggleAutomationBtn = document.getElementById('toggle-automation');
-        const indicatorA = document.getElementById('indicator-A');
-        const indicatorB = document.getElementById('indicator-B');
-        const controlsA = document.getElementById('controls-A');
-        const controlsB = document.getElementById('controls-B');
+        let isAutomationEnabled = false; 
+        
+        // ==============================================
+        // UI ELEMENTS (initialized inside window.onload)
+        // ==============================================
+        let faderDisplay, deckA, deckB, currentTrackInfo, mixLevelA, mixLevelB, currentTimeDisplay, durationDisplay, trackIndexDisplay, trackList, aiInsight;
+        let generateButton, loadingIndicator, loadingText, errorBox, errorMessage, toggleAutomationBtn;
+        let indicatorA, indicatorB, controlsA, controlsB;
+        let volumeASlider, volumeBSlider, playA, pauseA, playB, pauseB, muteA, muteB;
+        let crossfader, timeA, timeB;
+        let faderLabelA, faderLabelB;
+        let cueDisplay;
+
+        function initializeUIElements() {
+            // Main Display Elements
+            faderDisplay = document.getElementById('fader-display');
+            deckA = document.getElementById('deck-A');
+            deckB = document.getElementById('deck-B');
+            currentTrackInfo = document.getElementById('current-track-info');
+            mixLevelA = document.getElementById('mix-level-A');
+            mixLevelB = document.getElementById('mix-level-B');
+            currentTimeDisplay = document.getElementById('current-time-display');
+            durationDisplay = document.getElementById('duration-display');
+            trackIndexDisplay = document.getElementById('track-index-display');
+            trackList = document.getElementById('track-list');
+            aiInsight = document.getElementById('ai-insight');
+            
+            // Input/Control Elements
+            generateButton = document.getElementById('generateButton');
+            loadingIndicator = document.getElementById('loadingIndicator');
+            loadingText = document.getElementById('loadingText');
+            errorBox = document.getElementById('errorBox');
+            errorMessage = document.getElementById('errorMessage');
+            toggleAutomationBtn = document.getElementById('toggle-automation');
+
+            // Mixer Elements
+            crossfader = document.getElementById('crossfader');
+            timeA = document.getElementById('time-A');
+            timeB = document.getElementById('time-B');
+            faderLabelA = document.getElementById('fader-label-A');
+            faderLabelB = document.getElementById('fader-label-B');
+
+            // Deck Status and Manual Controls
+            indicatorA = document.getElementById('indicator-A');
+            indicatorB = document.getElementById('indicator-B');
+            controlsA = document.getElementById('controls-A');
+            controlsB = document.getElementById('controls-B');
+            volumeASlider = document.getElementById('volume-A-slider');
+            volumeBSlider = document.getElementById('volume-B-slider');
+            playA = document.getElementById('play-A');
+            pauseA = document.getElementById('pause-A');
+            playB = document.getElementById('play-B');
+            pauseB = document.getElementById('pause-B');
+            muteA = document.getElementById('mute-A');
+            muteB = document.getElementById('mute-B');
+            cueDisplay = document.getElementById('cue-status-display');
+
+            // Set initial state
+            updateAutomationButtonUI();
+            updateFader(0); // Initialize fader position
+        }
 
 
         // ==============================================
         // UTILITY FUNCTIONS
         // ==============================================
         function getPlayer(deck) {
-            return deck === 'A' ? playerA : playerB;
+            if (deck === 'A') return playerA;
+            if (deck === 'B') return playerB;
+            return null;
         }
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds < 0) return "0:00";
@@ -325,6 +536,7 @@
             generateButton.disabled = isLoading;
             loadingText.textContent = phaseText;
             generateButton.classList.toggle('opacity-50', isLoading);
+            generateButton.style.boxShadow = isLoading ? 'none' : '0 0 20px #06b6d4';
         }
         function displayError(message) {
             errorMessage.textContent = message;
@@ -333,21 +545,112 @@
         function hideError() {
             errorBox.classList.add('hidden');
         }
+        
+        /**
+         * Sanitizes and extracts the 11-character YouTube video ID from a string,
+         * regardless of whether it's a raw ID, a full URL, or a short URL.
+         */
+        function extractYouTubeID(urlOrId) {
+            if (!urlOrId) return FALLBACK_ID;
+            const trimmed = urlOrId.trim();
+            
+            // 1. Check if it's already a clean 11-char ID
+            if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes('=')) {
+                return trimmed;
+            }
+
+            // 2. Handle standard watch URL: ...?v=ID...
+            let match = trimmed.match(/[?&]v=([^&]+)/);
+            if (match && match[1].length === 11) {
+                return match[1];
+            }
+
+            // 3. Handle short URL: youtu.be/ID
+            match = trimmed.match(/youtu\.be\/([^?&]+)/);
+            if (match && match[1].length === 11) {
+                return match[1];
+            }
+
+            // 4. Handle embed URL: /embed/ID
+            match = trimmed.match(/\/embed\/([^?&]+)/);
+             if (match && match[1].length === 11) {
+                return match[1];
+            }
+            
+            // 5. If all else fails, log warning and return the fallback
+            console.warn(`[Video ID Sanitization] Failed to extract valid YouTube ID from: "${urlOrId}". Using fallback ID: ${FALLBACK_ID}`);
+            return FALLBACK_ID;
+        }
+
+
+        function updateAutomationButtonUI() {
+             if (isAutomationEnabled) {
+                toggleAutomationBtn.textContent = 'Automation ON (Active)';
+                toggleAutomationBtn.classList.remove('bg-red-800', 'hover:bg-red-700');
+                toggleAutomationBtn.classList.add('bg-green-700', 'hover:bg-green-600');
+                toggleAutomationBtn.style.boxShadow = '0 0 10px #10b981';
+            } else {
+                toggleAutomationBtn.textContent = 'Automation OFF (Manual)';
+                toggleAutomationBtn.classList.remove('bg-green-700', 'hover:bg-green-600');
+                toggleAutomationBtn.classList.add('bg-red-800', 'hover:bg-red-700');
+                toggleAutomationBtn.style.boxShadow = '0 0 10px #dc2626';
+            }
+        }
+
         function toggleAutomation() {
             isAutomationEnabled = !isAutomationEnabled;
-            toggleAutomationBtn.textContent = isAutomationEnabled ? 'Automation ON (Active)' : 'Automation OFF (Manual)';
-            toggleAutomationBtn.classList.toggle('bg-green-600', isAutomationEnabled);
-            toggleAutomationBtn.classList.toggle('hover:bg-green-700', isAutomationEnabled);
-            toggleAutomationBtn.classList.toggle('bg-red-600', !isAutomationEnabled);
-            toggleAutomationBtn.classList.toggle('hover:bg-red-700', !isAutomationEnabled);
+            updateAutomationButtonUI();
         }
+        
         function updatePlayerIndicator(deck, isPlaying) {
             const indicator = deck === 'A' ? indicatorA : indicatorB;
             const controls = deck === 'A' ? controlsA : controlsB;
             indicator.classList.toggle('playing', isPlaying);
-            // Apply a subtle shadow/border to the entire control panel if playing
-            controls.classList.toggle('shadow-blue-500/50', isPlaying && deck === 'A');
-            controls.classList.toggle('shadow-orange-500/50', isPlaying && deck === 'B');
+            
+            // Highlight the control panel
+            if (deck === 'A') {
+                controls.classList.toggle('shadow-cyan-400/40', isPlaying);
+                controls.classList.toggle('border-cyan-400', isPlaying);
+                controls.classList.toggle('border-cyan-800', !isPlaying);
+            } else {
+                controls.classList.toggle('shadow-orange-400/40', isPlaying);
+                controls.classList.toggle('border-orange-400', isPlaying);
+                controls.classList.toggle('border-orange-800', !isPlaying);
+            }
+        }
+        
+        /**
+         * Loads a selected track into the deck that is NOT currently active.
+         */
+        function loadTrackToNextDeck(trackIndex) {
+            if (trackIndex >= setlist.length) return;
+            
+            const track = setlist[trackIndex];
+            const videoId = extractYouTubeID(track.youtubeUrl);
+            
+            // Determine which deck is currently NOT active
+            let deckToLoad = activeDeck === 'A' ? 'B' : 'A';
+            nextDeck = deckToLoad; 
+
+            // Update Setlist UI to show what's loaded
+            document.querySelectorAll('.setlist-load-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-700', 'border-emerald-600');
+                btn.classList.add('bg-blue-700', 'border-blue-600');
+                btn.textContent = 'Load to Next Deck';
+            });
+            const loadBtn = document.getElementById(`load-btn-${trackIndex}`);
+            if (loadBtn) {
+                loadBtn.classList.remove('bg-blue-700', 'border-blue-600');
+                loadBtn.classList.add('bg-emerald-700', 'border-emerald-600');
+                loadBtn.textContent = `QUEUED ON DECK ${deckToLoad}`;
+            }
+
+            // Update the setlist index so the next mix uses this track
+            setlistIndex = trackIndex - 1; 
+
+            // Load and pause the video on the determined deck
+            loadTrack(getPlayer(deckToLoad), videoId, false, false);
+            console.log(`Track ${trackIndex + 1} loaded to DECK ${deckToLoad} as the next track.`);
         }
 
         // ==============================================
@@ -355,43 +658,143 @@
         // ==============================================
         function manualControl(deck, action, value = null) {
             const player = getPlayer(deck);
-            if (!player || !isPlayersReady) return;
+            if (!isPlayersReady && action !== 'crossfade') return;
+            
             // Manual intervention temporarily disables automation
-            if (isAutomationEnabled) {
-                isAutomationEnabled = false;
-                toggleAutomationBtn.textContent = 'Automation OFF (Manual)';
-                toggleAutomationBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-                toggleAutomationBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            if (action !== 'volume' && action !== 'mute') { 
+                if (isAutomationEnabled) {
+                    isAutomationEnabled = false;
+                    updateAutomationButtonUI();
+                }
             }
+            
             switch (action) {
                 case 'play':
                     player.playVideo();
+                    player.unMute(); 
+                    player.setVolume(parseInt(deck === 'A' ? volumeASlider.value : volumeBSlider.value)); // Use slider value
                     updatePlayerIndicator(deck, true);
                     break;
                 case 'pause':
                     player.pauseVideo();
                     updatePlayerIndicator(deck, false);
                     break;
+                case 'mute':
+                    if (player.isMuted()) {
+                        player.unMute();
+                        // Reset slider value to be the new source of volume control
+                        player.setVolume(parseInt(deck === 'A' ? volumeASlider.value : volumeBSlider.value));
+                        document.getElementById(`mute-${deck}`).classList.remove('bg-red-700');
+                    } else {
+                        player.mute();
+                        document.getElementById(`mute-${deck}`).classList.add('bg-red-700');
+                    }
+                    break;
                 case 'volume':
                     const volume = parseInt(value, 10);
-                    player.setVolume(volume);
-                    player.unMute();
-                    document.getElementById(`vol-${deck}`).textContent = volume;
+                    // Only apply if the deck isn't fully controlled by the crossfader right now
+                    if (!player.isMuted()) { 
+                        player.setVolume(volume);
+                    }
+                    // Update UI for the manual slider value
+                    break;
+                case 'crossfade':
+                    // In manual mode, the crossfader value directly sets the mix
+                    updateFader(parseInt(value, 10));
                     break;
             }
         }
+        
+        // ==============================================
+        // CUEING FUNCTIONS (Player C)
+        // ==============================================
+        let isCueing = false;
+        let cueTimeout = null;
+
+        function stopCueing() {
+            if (playerC && isCueing) {
+                playerC.stopVideo();
+                playerC.setVolume(0);
+            }
+            isCueing = false;
+            if (cueTimeout) clearTimeout(cueTimeout);
+            cueDisplay.classList.add('translate-x-full', 'opacity-0');
+            cueDisplay.classList.remove('translate-x-0', 'opacity-100');
+            cueDisplay.style.boxShadow = '0 0 0px var(--cue-color)';
+        }
+
+        function cueTrack(videoUrl) {
+            if (!playerC || !isPlayersReady) return;
+            
+            const videoId = extractYouTubeID(videoUrl);
+
+            if (isCueing) {
+                stopCueing();
+            }
+            
+            const track = setlist.find(t => t.youtubeUrl === videoUrl);
+            const displayTitle = track ? `${track.track} - ${track.artist}` : videoUrl;
+
+            cueDisplay.innerHTML = `<span class="text-xs text-gray-300">CUEING:</span> <span class="text-purple-300 font-bold text-lg">${displayTitle}</span> <button onclick="window.stopCueing()" class="ml-3 px-2 py-1 bg-red-700 hover:bg-red-600 rounded text-xs font-bold transition">STOP CUE</button>`;
+            cueDisplay.classList.remove('translate-x-full', 'opacity-0');
+            cueDisplay.classList.add('translate-x-0', 'opacity-100');
+            cueDisplay.style.boxShadow = '0 0 20px #d946ef'; 
+            
+            playerC.loadVideoById({videoId: videoId, startSeconds: 0});
+            playerC.playVideo(); 
+            playerC.unMute(); 
+            playerC.setVolume(80); 
+            isCueing = true;
+            
+            // Automatically stop cueing after 15 seconds
+            cueTimeout = setTimeout(stopCueing, 15000); 
+        }
+
+        // ==============================================
+        // UI RENDER FUNCTIONS
+        // ==============================================
+
+        function renderSetlistUI() {
+            trackList.innerHTML = setlist.map((track, index) =>
+                `<li id="track-${index}" class="track-list-item p-3 text-sm transition-colors duration-300 flex flex-wrap justify-between items-center bg-gray-900/50 hover:bg-gray-800/50">
+                    <div class="flex-1 min-w-0 pr-3">
+                        <span class="font-['Orbitron'] w-8 text-orange-400 inline-block">${index + 1}.</span>
+                        <span class="text-white font-bold">${track.track}</span>
+                        <span class="text-gray-400">by ${track.artist}</span>
+                    </div>
+                    <div class="flex space-x-2 items-center text-xs mt-2 sm:mt-0">
+                        <button id="cue-btn-${index}" onclick="cueTrack('${track.youtubeUrl}')" class="control-button cue-btn px-3 py-1 rounded-md text-white shadow-md transition">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9L16 12l-6 4.5z"></path></svg>
+                        </button>
+                        <button id="load-btn-${index}" onclick="loadTrackToNextDeck(${index})" class="control-button load-btn setlist-load-btn px-3 py-1 bg-blue-700 border-blue-600 hover:bg-blue-600 rounded-md text-white shadow-md transition">
+                            Load to Next Deck
+                        </button>
+                    </div>
+                </li>`
+            ).join('');
+        }
+
+        function highlightCurrentTrack(index) {
+            document.querySelectorAll('#track-list li').forEach(li => {
+                li.classList.remove('track-active');
+            });
+            const currentLi = document.getElementById(`track-${index}`);
+            if (currentLi) {
+                currentLi.classList.add('track-active');
+            }
+        }
+        
         // ==============================================
         // AI SETLIST GENERATION (GEMINI API)
         // ==============================================
-        async function fetchWithRetry(apiUrl, payload, maxRetries = 5, controller = null) {
+        async function fetchWithRetry(apiUrl, payload, maxRetries = 5) {
             let retryDelay = 1000;
             for (let i = 0; i < maxRetries; i++) {
                 try {
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                        signal: controller ? controller.signal : undefined
+                        body: JSON.stringify(payload)
                     });
                     if (response.status === 429) {
                         if (i < maxRetries - 1) {
@@ -409,7 +812,6 @@
                     }
                     return await response.json();
                 } catch (e) {
-                    if (e.name === 'AbortError') throw e;
                     if (i === maxRetries - 1) throw e;
                     await new Promise(resolve => setTimeout(resolve, retryDelay));
                     retryDelay *= 2;
@@ -418,25 +820,24 @@
         }
         async function generateSetlist() {
             hideError();
-            setlist = []; // Clear existing list
+            setlist = []; 
             
             const location = document.getElementById('location').value.trim();
             const theme = document.getElementById('theme').value.trim();
             
             let userQuery;
             if (location === "" && theme === "") {
-                userQuery = "Generate a continuous 20-track setlist featuring globally trending songs with excellent official music videos or visuals, suitable for VJ playback.";
+                userQuery = "Generate a continuous 20-track setlist featuring globally trending songs with excellent official music videos or visuals, suitable for VJ playback. The tracks should have a high-energy dance vibe.";
             } else {
-                userQuery = `Location: ${location}. Theme/Genre: ${theme}. Generate a continuous 20-track setlist, where the next track is mixable with the previous one.`;
+                userQuery = `Location: ${location}. Theme/Genre: ${theme}. Generate a continuous 20-track visual setlist, where the next track is mixable with the previous one. Focus on dynamic, high-contrast visuals appropriate for the theme.`;
             }
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${apiKey}`; 
             
-            // Define the structured output schema
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
                 systemInstruction: { 
                     parts: [{ 
-                        text: `You are 'Colin the AI DJ.' Generate an exactly ${TRACK_COUNT}-track dance music setlist. For each track, you MUST provide the YouTube Video ID (e.g., dQw4w9WgXcQ) that links directly to the high-quality official or extended mix of the song, suitable for VJ/DJ playback. The response MUST be a JSON object.` 
+                        text: `You are 'Colin the AI DJ.' Generate an exactly ${TRACK_COUNT}-track dance music setlist. For each track, you MUST provide the FULL YouTube Video URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ) in the 'youtubeUrl' field. The URL must link directly to the high-quality official or extended mix of the song, suitable for VJ/DJ playback. The response MUST be a JSON object.`
                     }] 
                 },
                 generationConfig: {
@@ -444,7 +845,7 @@
                     responseSchema: {
                         type: "OBJECT",
                         properties: {
-                            "insight": { "type": "STRING", "description": "A brief, one-sentence justification for the setlist design." },
+                            "insight": { "type": "STRING", "description": "A brief, one-sentence justification for the setlist design, focusing on the visual flow and energy." },
                             "setlist": {
                                 "type": "ARRAY",
                                 "description": `The ${TRACK_COUNT} recommended tracks for a mix.`,
@@ -453,9 +854,9 @@
                                     "properties": {
                                         "track": { "type": "STRING" },
                                         "artist": { "type": "STRING" },
-                                        "youtubeId": { "type": "STRING", "description": "The high-quality YouTube Video ID." }
+                                        "youtubeUrl": { "type": "STRING", "description": "The full YouTube Video URL." }
                                     },
-                                    "propertyOrdering": ["track", "artist", "youtubeId"]
+                                    "propertyOrdering": ["track", "artist", "youtubeUrl"]
                                 }
                             }
                         },
@@ -464,69 +865,54 @@
                 }
             };
             try {
-                showLoading(true, "Generating 20-Track Setlist and finding YouTube IDs...");
+                showLoading(true, "ACCESSING DATA STREAMS: Generating 20-Track Setlist and finding YouTube URLs...");
                 
                 const result = await fetchWithRetry(apiUrl, payload);
                 let jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
                 
+                // Remove Markdown code block syntax if present
                 const parsedData = JSON.parse(jsonText.replace(/\`\`\`json|\`\`\`/g, '').trim());
                 
                 if (!Array.isArray(parsedData.setlist) || parsedData.setlist.length !== TRACK_COUNT) {
                     throw new Error(`AI generated an invalid setlist (Expected ${TRACK_COUNT} tracks).`);
                 }
                 
+                // Sanitize every URL received from the AI, storing the full URL for the UI
                 setlist = parsedData.setlist.map(t => ({
                     ...t,
-                    youtubeId: t.youtubeId?.trim() || FALLBACK_ID // Fallback ID
+                    // Note: We are now checking for 'youtubeUrl' and storing the full URL.
+                    // The video ID will be extracted during playback/loading.
+                    youtubeUrl: t.youtubeUrl || `https://www.youtube.com/watch?v=${FALLBACK_ID}`
                 }));
                 
                 // Update UI
                 document.getElementById('vj-section').style.display = 'block';
                 document.getElementById('setlist-display').style.display = 'block';
-                aiInsight.textContent = parsedData.insight;
+                aiInsight.textContent = `// AI INSIGHT: ${parsedData.insight}`;
                 renderSetlistUI();
                 
                 // Start the mix
                 startMix();
             } catch (e) {
                 console.error("AI Generation Error:", e);
-                displayError(`AI Generation failed. Check console for details. ${e.message}`);
+                displayError(`AI GENERATION FAILED. Check console for details. ${e.message}`);
                 document.getElementById('vj-section').style.display = 'none';
                 document.getElementById('setlist-display').style.display = 'none';
             } finally {
                 showLoading(false);
             }
         }
-        function renderSetlistUI() {
-            trackList.innerHTML = setlist.map((track, index) =>
-                `<li id="track-${index}" class="p-3 rounded-lg border-b border-gray-700/50 flex justify-between items-center text-sm transition-colors duration-300">
-                    <span class="font-bold w-6 text-blue-400">${index + 1}.</span>
-                    <span class="flex-grow">
-                        ${track.track}
-                        <span class="text-gray-400">- ${track.artist}</span>
-                    </span>
-                    <span class="text-gray-500 text-xs">ID: ${track.youtubeId}</span>
-                </li>`
-            ).join('');
-        }
-        function highlightCurrentTrack(index) {
-            document.querySelectorAll('#track-list li').forEach(li => {
-                li.classList.remove('track-active', 'border-blue-500', 'bg-blue-900/30');
-            });
-            const currentLi = document.getElementById(`track-${index}`);
-            if (currentLi) {
-                currentLi.classList.add('track-active', 'border-blue-500');
-          //      currentLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
+        
         // ==============================================
         // VJ MIXER & AUTOMATION LOGIC
         // ==============================================
+        
         /**
-         * 1. Initialize YouTube Players
+         * 1. Initialize YouTube Players (A, B, and C)
          */
         window.onYouTubeIframeAPIReady = function() {
             const playerVars = { 'controls': 0, 'modestbranding': 1, 'rel': 0, 'showinfo': 0, 'loop': 0, 'fs': 0, 'autoplay': 0 };
+            
             playerA = new YT.Player('player-A', {
                 videoId: FALLBACK_ID,
                 events: { 'onReady': onPlayerReady, 'onError': onPlayerError, 'onStateChange': onPlayerStateChange },
@@ -537,90 +923,109 @@
                 events: { 'onReady': onPlayerReady, 'onError': onPlayerError, 'onStateChange': onPlayerStateChange },
                 playerVars: playerVars
             });
+            playerC = new YT.Player('player-C', {
+                videoId: FALLBACK_ID,
+                events: { 'onReady': onPlayerReady, 'onError': onPlayerError },
+                playerVars: { ...playerVars, 'volume': 0 } 
+            });
         }
+        
         let readyCount = 0;
         function onPlayerReady(event) {
             readyCount++;
             event.target.setVolume(0); 
             event.target.mute(); 
-            // Set initial volume display
-            document.getElementById(`vol-${event.target === playerA ? 'A' : 'B'}`).textContent = '0';
             
-            if (readyCount === 2) {
+            if (readyCount === 3) { 
                 isPlayersReady = true;
             }
         }
         
         function onPlayerStateChange(event) {
             const deck = event.target === playerA ? 'A' : 'B';
-
-            // Update playing indicator
             updatePlayerIndicator(deck, event.data === YT.PlayerState.PLAYING);
 
-            // Check if a video has ended (state 0) - this should usually be handled by the monitorMix loop, 
-            // but acts as a safeguard.
             if (event.data === YT.PlayerState.ENDED) {
                  if (isAutomationEnabled && !isCrossfading) {
-                    // Force the next track if it unexpectedly ends while the mixer is idle
                     forceNextTrack();
                  }
             }
         }
-        /**
-         * Video Error Handling: Skips the track and loads the next one.
-         */
+        
         function onPlayerError(event) {
-            const deck = event.target === playerA ? 'A' : 'B';
+            const player = event.target;
+            let deck = null;
+
+            if (player === playerA) deck = 'A';
+            if (player === playerB) deck = 'B';
+            if (player === playerC) { 
+                console.warn(`Cue Player error (Code ${event.data}). Stopping cueing.`);
+                stopCueing();
+                return;
+            }
             
-            // Error codes indicating video issues (100: not found, 101/150: embedding disabled/not playable)
             if (event.data === 100 || event.data === 101 || event.data === 150) {
                 console.error(`Video Error on DECK ${deck} (Code ${event.data}). Skipping track...`);
                 
-                // Only act if the error happened on the currently active track
                 if (deck === activeDeck) {
-                    displayError(`Video for Track ${setlistIndex + 1} (${setlist[setlistIndex].track}) is unavailable. Skipping...`);
-                    // Use a short delay before forcing the next track to allow the UI error to display
-                    setTimeout(forceNextTrack, 1000); 
+                    displayError(`VIDEO ERROR: Track ${setlistIndex + 1} (${setlist[setlistIndex].track}) unavailable. Skipping...`);
+                    setTimeout(forceNextTrack, 2000); 
                 } else {
-                    // If the error is on the NEXT deck, we swap its ID to the fallback ID to prevent crash
-                    // This way the next deck is ready, but plays a generic visual.
-                    event.target.loadVideoById({videoId: FALLBACK_ID, startSeconds: 0});
+                    player.loadVideoById({videoId: FALLBACK_ID, startSeconds: 0});
                     console.warn(`Next deck (${deck}) had an error, loading fallback video.`);
                 }
             }
         }
-        /**
-         * Forces the application to immediately swap to the next track.
-         */
+
         function forceNextTrack() {
             if (setlistIndex >= setlist.length - 1) {
                 // End of setlist
-                clearInterval(timerInterval);
-                currentTrackInfo.textContent = "Setlist Complete! Thank you for watching.";
+                if (timerInterval) clearInterval(timerInterval);
+                currentTrackInfo.textContent = "SESSION END: Setlist Complete. Awaiting New Sequence...";
                 getPlayer(activeDeck).pauseVideo();
                 getPlayer(activeDeck).setVolume(0);
-                updateFader(activeDeck === 'A' ? 0 : 100);
                 trackIndexDisplay.textContent = setlist.length;
                 isCrossfading = false;
                 updatePlayerIndicator(activeDeck, false);
                 return;
             }
-            // Immediately increment index and swap decks
+            
+            const nextTrack = setlist[setlistIndex + 1];
+            const expectedNextId = extractYouTubeID(nextTrack.youtubeUrl);
+            
+            // Check if the next track is queued on the nextDeck
+            if (setlistIndex + 1 < setlist.length) {
+                const nextPlayerId = getPlayer(nextDeck).getVideoData().video_id;
+
+                if (nextPlayerId !== expectedNextId) {
+                     console.warn(`Next track not loaded correctly on ${nextDeck}. Re-loading track ${setlistIndex + 2}.`);
+                     loadTrack(getPlayer(nextDeck), expectedNextId, false, false);
+                }
+            }
+
+            // Before swap, reset "Load to Next Deck" buttons
+            document.querySelectorAll('.setlist-load-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-700', 'border-emerald-600');
+                btn.classList.add('bg-blue-700', 'border-blue-600');
+                btn.textContent = 'Load to Next Deck';
+            });
+            
             setlistIndex++;
             
-            // Swap roles (Deck A becomes B, B becomes A)
             const oldActiveDeck = activeDeck;
             activeDeck = nextDeck;
             nextDeck = oldActiveDeck;
             
-            // Instant mix state update (100% on the new active deck)
+            // The mix is now instantly 100% on the new active deck
             updateFader(activeDeck === 'A' ? 0 : 100); 
+            crossfader.value = activeDeck === 'A' ? 0 : 100;
             
-            // The new active player starts playing and is unmuted
-            getPlayer(activeDeck).playVideo();
+            // The new active player must be unmuted and playing
             getPlayer(activeDeck).unMute();
+            getPlayer(activeDeck).playVideo(); 
+            getPlayer(activeDeck).setVolume(100);
             updatePlayerIndicator(activeDeck, true);
-            
+
             // The old deck is muted and paused
             getPlayer(nextDeck).mute();
             getPlayer(nextDeck).pauseVideo();
@@ -629,129 +1034,125 @@
             
             // Load the next-next track into the now-available 'next' deck
             if (setlistIndex + 1 < setlist.length) {
-                loadTrack(getPlayer(nextDeck), setlist[setlistIndex + 1].youtubeId, false, false);
+                const nextNextTrackId = extractYouTubeID(setlist[setlistIndex + 1].youtubeUrl);
+                loadTrack(getPlayer(nextDeck), nextNextTrackId, false, false);
             }
-            // Update UI and reset automation state
+            
             trackIndexDisplay.textContent = setlistIndex + 1;
             highlightCurrentTrack(setlistIndex);
             isCrossfading = false;
         }
-        /**
-         * 2. Start the Mix after setlist generation.
-         */
+
         function startMix() {
-            if (!isPlayersReady || setlist.length === 0) return displayError("Players not ready or setlist is empty.");
+            if (!isPlayersReady || setlist.length === 0) return displayError("SYSTEM ERROR: Players not ready or setlist is empty.");
             
-            // Initial state
             setlistIndex = 0;
             activeDeck = 'A';
             nextDeck = 'B';
             
-            // Load and play the first track (Deck A)
-            loadTrack(playerA, setlist[0].youtubeId, true, true); 
-            updatePlayerIndicator('A', true);
-            updatePlayerIndicator('B', false);
+            const track0Id = extractYouTubeID(setlist[0].youtubeUrl);
+            loadTrack(playerA, track0Id, true, true); 
             
-            // Load the second track (Deck B)
             if (setlist.length > 1) {
-                loadTrack(playerB, setlist[1].youtubeId, false, false); 
+                const track1Id = extractYouTubeID(setlist[1].youtubeUrl);
+                loadTrack(playerB, track1Id, false, false); 
             }
             
-            // Set initial mix state: A=100%, B=0%
+            // Reset to A=100%
             updateFader(0);
+            crossfader.value = 0;
             highlightCurrentTrack(0);
-            // Start the monitoring loop
+            
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(monitorMix, TIMER_INTERVAL_MS);
             
-            // Ensure automation is on by default after generating a setlist
-            if (!isAutomationEnabled) toggleAutomation();
+            currentTrackInfo.textContent = `${setlistIndex + 1}. ${setlist[setlistIndex].track} - ${setlist[setlistIndex].artist}`;
+
+            // Reset manual volume sliders (they only control non-mixed decks)
+            volumeASlider.value = 100;
+            volumeBSlider.value = 0;
         }
-        /**
-         * Loads a track onto a player.
-         */
+
         function loadTrack(player, videoId, shouldPlay, shouldUnmute) {
             if (!player || !videoId) return;
-            // Load the track
             player.loadVideoById({videoId: videoId, startSeconds: 0});
             
-            // Set volume/mute state
             if (shouldUnmute) {
                 player.unMute();
+                player.setVolume(100); 
             } else {
                 player.mute();
+                player.setVolume(0);
             }
             
-            // Start video playback
             if (shouldPlay) {
                 player.playVideo();
             } else {
                 player.pauseVideo();
             }
         }
-        /**
-         * 3. Main Loop: Monitors the active track and initiates crossfades.
-         */
+        
         function monitorMix() {
-            if (isCrossfading || !isAutomationEnabled || setlist.length === 0) return;
+            // Manual mode takes precedence over the timing logic
+            if (!isAutomationEnabled) {
+                updateTimeDisplays();
+                return;
+            }
+            
+            if (isCrossfading || setlist.length === 0) return;
             const activePlayer = getPlayer(activeDeck);
             
             try {
-                // If the active player is paused, the AI waits.
                 if (activePlayer.getPlayerState() !== YT.PlayerState.PLAYING) return;
                 
                 const currentTime = activePlayer.getCurrentTime();
                 const duration = activePlayer.getDuration();
                 const remainingTime = duration - currentTime;
-                // Update status display
-                currentTrackInfo.textContent = `${setlistIndex + 1}. ${setlist[setlistIndex].track} - ${setlist[setlistIndex].artist}`;
-                currentTimeDisplay.textContent = formatTime(currentTime);
-                durationDisplay.textContent = formatTime(duration);
-                trackIndexDisplay.textContent = setlistIndex + 1;
-                // If the track is near its end, start the crossfade
+                
+                updateTimeDisplays(activeDeck, currentTime, duration);
+
                 if (remainingTime <= FADE_DURATION_SECONDS && remainingTime > 0.1) {
-                    // Check if we have a next track ready
-                    if (setlistIndex + 1 < setlist.length) {
+                    if (setlistIndex + 1 < setlist.length && !isCrossfading) {
                         isCrossfading = true;
                         
-                        // Start the next deck and crossfade
+                        // Ensure the next player is playing and ready to fade in
                         const nextPlayer = getPlayer(nextDeck);
-                        // Start playing the next track just before the fade begins
                         nextPlayer.playVideo(); 
-                        nextPlayer.unMute(); 
+                        nextPlayer.unMute(); // Unmute the next deck so volume can be controlled by the fader
                         
+                        // Start automated crossfade
                         startCrossfade(FADE_DURATION_SECONDS * 1000); 
-                        // Pre-load the track after next track
-                        if (setlistIndex + 2 < setlist.length) {
-                            const trackToLoad = setlist[setlistIndex + 2];
-                            const loadDeck = nextDeck; // The deck that will be free soon
-                            loadTrack(getPlayer(loadDeck), trackToLoad.youtubeId, false, false);
-                        }
-                    } else if (remainingTime <= 0.1 && setlistIndex === setlist.length - 1) {
-                    // End of Setlist logic
-                        clearInterval(timerInterval);
-                        currentTrackInfo.textContent = "Setlist Complete! Thank you for watching.";
-                        activePlayer.pauseVideo();
-                        activePlayer.setVolume(0);
-                        updateFader(activeDeck === 'A' ? 0 : 100);
-                        trackIndexDisplay.textContent = setlist.length;
                     }
                 }
             } catch (e) {
-                // Handle potential YT API errors during monitoring
-                console.warn("Player status error, attempting to restart monitoring:", e.message);
+                console.warn("Player status error (monitorMix):", e.message);
             }
         }
+
+        function updateTimeDisplays(activeDeck = 'A', currentTime = 0, duration = 0) {
+            const activePlayer = getPlayer(activeDeck);
+            const otherDeck = activeDeck === 'A' ? 'B' : 'A';
+            const otherPlayer = getPlayer(otherDeck);
+
+            // Update Global Time
+            if (activePlayer && activePlayer.getCurrentTime) {
+                currentTime = activePlayer.getCurrentTime();
+                duration = activePlayer.getDuration();
+                currentTimeDisplay.textContent = formatTime(currentTime);
+                durationDisplay.textContent = formatTime(duration);
+            }
+
+            // Update Deck-Specific Time
+            timeA.textContent = formatTime(activePlayer?.getCurrentTime?.() || 0);
+            timeB.textContent = formatTime(otherPlayer?.getCurrentTime?.() || 0);
+        }
         
-        /**
-         * 4. Smoothly transitions the mix over the duration.
-         */
         function startCrossfade(durationMs) {
             let startTime = performance.now();
             let endFaderValue = activeDeck === 'A' ? 100 : 0;
             let startFaderValue = activeDeck === 'A' ? 0 : 100;
+            
             const animateFade = (currentTime) => {
-                // Automation check inside the loop is crucial for manual override
                 if (!isAutomationEnabled) {
                     isCrossfading = false;
                     return; 
@@ -759,19 +1160,21 @@
                 const elapsedTime = currentTime - startTime;
                 const progress = Math.min(1, elapsedTime / durationMs); 
                 let faderValue;
+
                 if (activeDeck === 'A') {
-                    // A -> B transition (0 to 100)
+                    // Fade from 0 (A 100%) to 100 (B 100%)
                     faderValue = startFaderValue + (endFaderValue - startFaderValue) * progress;
                 } else {
-                    // B -> A transition (100 to 0)
+                    // Fade from 100 (B 100%) to 0 (A 100%)
                     faderValue = startFaderValue - (startFaderValue - endFaderValue) * progress;
                 }
                 
                 updateFader(faderValue);
+                crossfader.value = faderValue; 
+                
                 if (progress < 1) {
                     requestAnimationFrame(animateFade);
                 } else {
-                    // Fade is complete
                     completeCrossfade();
                 }
             };
@@ -779,103 +1182,93 @@
             requestAnimationFrame(animateFade);
         }
         
-        /**
-         * 5. Swaps deck roles and increments the setlist index.
-         */
         function completeCrossfade() {
-            // Check if we actually have a next track to transition to
-            if (setlistIndex >= setlist.length - 1) {
-                 // Final track finished
-                 forceNextTrack();
-                 return;
-            }
-            // Update index and UI
-            setlistIndex++;
-            trackIndexDisplay.textContent = setlistIndex + 1;
-            highlightCurrentTrack(setlistIndex);
-            // Swap deck roles
-            const oldActiveDeck = activeDeck;
-            activeDeck = nextDeck;
-            nextDeck = oldActiveDeck;
-            
-            // Mute and pause the deck that just finished its track
-            const oldActivePlayer = getPlayer(nextDeck);
-            oldActivePlayer.mute();
-            oldActivePlayer.pauseVideo();
-            oldActivePlayer.setVolume(0);
-            updatePlayerIndicator(nextDeck, false);
-            
-            // The new active deck should now be visually active
-            updatePlayerIndicator(activeDeck, true);
-            
-            // If there's another track, pre-load the next-next one
-            if (setlistIndex + 1 < setlist.length) {
-                const trackToLoad = setlist[setlistIndex + 1];
-                loadTrack(getPlayer(nextDeck), trackToLoad.youtubeId, false, false);
-            }
+            forceNextTrack(); 
             isCrossfading = false;
         }
+        
         /**
-         * 6. Core Logic: Updates volume and opacity based on fader position (0-100).
+         * Core function to update all visual and audio parameters based on crossfader value (0-100).
+         * 0 = Deck A is 100%. 100 = Deck B is 100%.
          */
         function updateFader(faderValue) {
             const faderInt = Math.round(faderValue);
-            // DECK A: Fades out as fader goes from 0 (100%) to 100 (0%)
-            const a_mix = 100 - faderInt; 
             
-            // DECK B: Fades in as fader goes from 0 (0%) to 100 (100%)
+            // Player A mix level: 100 down to 0
+            const a_mix = 100 - faderInt; 
+            // Player B mix level: 0 up to 100
             const b_mix = faderInt; 
-            const b_opacity = b_mix / 100;
-
-            // Fader Visual Glow Logic: 
-            // 0-20 (mostly A) -> Glow A
-            // 80-100 (mostly B) -> Glow B
-            faderDisplay.classList.remove('fader-glow-A', 'fader-glow-B');
-            faderWrapper.classList.remove('fader-glow-A', 'fader-glow-B');
-
-            if (faderInt < 20) {
-                // Focus on A
-                faderDisplay.classList.add('bg-blue-500');
-                faderDisplay.classList.remove('bg-orange-500');
-                faderWrapper.classList.add('fader-glow-A');
-            } else if (faderInt > 80) {
-                 // Focus on B
-                faderDisplay.classList.add('bg-orange-500');
-                faderDisplay.classList.remove('bg-blue-500');
-                faderWrapper.classList.add('fader-glow-B');
-            } else {
-                // Crossfading/Neutral zone (use a blend color or just blue as the base)
-                faderDisplay.classList.add('bg-blue-500');
-                faderDisplay.classList.remove('bg-orange-500');
+            
+            // --- Visual Updates ---
+            
+            // Crossfader Knob Glow
+            crossfader.classList.remove('fader-a-side', 'fader-b-side');
+            if (faderInt < 50) {
+                 crossfader.classList.add('fader-a-side');
+            } else if (faderInt > 50) {
+                 crossfader.classList.add('fader-b-side');
             }
 
-            // Apply Volume Control (YouTube volume is 0-100)
-            playerA.setVolume(a_mix); 
-            playerB.setVolume(b_mix);
-            // Update manual volume display to reflect the current automated mix
-            document.getElementById('vol-A').textContent = a_mix;
-            document.getElementById('vol-B').textContent = b_mix;
-            
-            // Apply Opacity Control (Deck B is the top layer)
-            deckB.style.opacity = b_opacity;
-            deckA.style.opacity = 1;
-            // Update UI feedback
+            // Fader Visual Display (VU Meter style)
+            if (faderDisplay) { 
+                faderDisplay.style.backgroundImage = `linear-gradient(to right, 
+                    var(--primary-color) ${a_mix}%, 
+                    #374151 ${a_mix}%, 
+                    #374151 ${b_mix}%, 
+                    var(--accent-color) ${b_mix}%)`;
+                
+                // Opacity (Deck B is the top layer for blending)
+                deckB.style.opacity = b_mix / 100;
+                deckA.style.opacity = 1;
+                
+                faderLabelA.style.opacity = a_mix > 10 ? 1 : 0.2;
+                faderLabelB.style.opacity = b_mix > 10 ? 1 : 0.2;
+                faderLabelA.style.color = a_mix > 50 ? 'var(--primary-color)' : '#9ca3af';
+                faderLabelB.style.color = b_mix > 50 ? 'var(--accent-color)' : '#9ca3af';
+            }
+
+            // Update UI feedback (Mix Level % in decks)
             mixLevelA.textContent = `${a_mix}%`;
             mixLevelB.textContent = `${b_mix}%`;
-            faderDisplay.style.width = `${faderInt}%`;
+            
+            // --- Audio Updates ---
 
-            // Update player indicators during a manual override or at the endpoints of the mix
-            if (!isAutomationEnabled) {
-                updatePlayerIndicator('A', playerA.getPlayerState() === YT.PlayerState.PLAYING);
-                updatePlayerIndicator('B', playerB.getPlayerState() === YT.PlayerState.PLAYING);
-            }
+            // Only update volume if player is not muted by the manual deck mute button.
+            if (!getPlayer('A').isMuted()) getPlayer('A').setVolume(a_mix);
+            if (!getPlayer('B').isMuted()) getPlayer('B').setVolume(b_mix);
         }
+        
+        // ==============================================
+        // MAIN ENTRY POINT (Ensures DOM is ready)
+        // ==============================================
 
-        // ==============================================
-        // EVENT LISTENERS
-        // ==============================================
-        generateButton.addEventListener('click', generateSetlist);
-        toggleAutomationBtn.addEventListener('click', toggleAutomation);
+        window.onload = function() {
+            initializeUIElements();
+            
+            // --- Event Listeners ---
+            
+            // AI Generation & Automation
+            generateButton.addEventListener('click', generateSetlist);
+            toggleAutomationBtn.addEventListener('click', toggleAutomation);
+            
+            // Mixer Controls
+            crossfader.addEventListener('input', (e) => manualControl('MIX', 'crossfade', e.target.value));
+
+            // Manual Deck A Controls
+            playA.addEventListener('click', () => manualControl('A', 'play'));
+            pauseA.addEventListener('click', () => manualControl('A', 'pause'));
+            muteA.addEventListener('click', () => manualControl('A', 'mute'));
+            volumeASlider.addEventListener('input', (e) => manualControl('A', 'volume', e.target.value));
+
+            // Manual Deck B Controls
+            playB.addEventListener('click', () => manualControl('B', 'play'));
+            pauseB.addEventListener('click', () => manualControl('B', 'pause'));
+            muteB.addEventListener('click', () => manualControl('B', 'mute'));
+            volumeBSlider.addEventListener('input', (e) => manualControl('B', 'volume', e.target.value));
+            
+            // Expose stopCueing globally for the cue button
+            window.stopCueing = stopCueing;
+        };
     </script>
 </body>
 </html>
